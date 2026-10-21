@@ -1,7 +1,7 @@
 // Sessão da aluna no banco Método: login, dados da tabela alunas e guarda de acesso.
 import { useNavigate } from "@tanstack/react-router";
 import type { Session } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { supabase } from "@/integrations/metodo/client";
 
@@ -31,15 +31,20 @@ export function AlunaProvider({ children }: { children: ReactNode }) {
   const [sessao, setSessao] = useState<Session | null>(null);
   const [aluna, setAluna] = useState<Aluna | null>(null);
   const [acessoAtivo, setAcessoAtivo] = useState(false);
+  // Id da usuária cujos dados já estão carregados. Evita mostrar "acesso não está ativo"
+  // no instante entre o login dar certo e os dados dela chegarem do banco.
+  const carregadoPara = useRef<string | null>(null);
 
   const carregarAluna = useCallback(async (s: Session | null) => {
     setSessao(s);
     if (!s) {
+      carregadoPara.current = null;
       setAluna(null);
       setAcessoAtivo(false);
       setCarregando(false);
       return;
     }
+    if (carregadoPara.current !== s.user.id) setCarregando(true);
     const [{ data }, { data: ativo }] = await Promise.all([
       supabase
         .from("alunas")
@@ -50,6 +55,7 @@ export function AlunaProvider({ children }: { children: ReactNode }) {
     ]);
     setAluna((data as Aluna | null) ?? null);
     setAcessoAtivo(Boolean(ativo) || Boolean((data as Aluna | null)?.is_admin));
+    carregadoPara.current = s.user.id;
     setCarregando(false);
     void supabase.rpc("registrar_acesso");
   }, []);
@@ -58,6 +64,8 @@ export function AlunaProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => carregarAluna(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((evento, s) => {
       if (evento === "SIGNED_IN" || evento === "SIGNED_OUT" || evento === "USER_UPDATED") {
+        // Login de outra pessoa (ou primeiro login): segura a tela até os dados chegarem.
+        if (s && carregadoPara.current !== s.user.id) setCarregando(true);
         setTimeout(() => carregarAluna(s), 0);
       }
     });

@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { Logo } from "@/components/Logo";
 import { Avatar } from "@/components/metodo/visual";
-import { GRUPO_VIP_URL } from "@/config";
+import { GRUPO_VIP_URL, PAGINA_VENDAS_URL } from "@/config";
 import { primeiroNome } from "@/lib/formato";
 import { useAluna, useGuardaAcesso } from "@/lib/aluna";
 import { usePostsDatas } from "@/lib/dados";
@@ -64,10 +64,22 @@ export function AppLayout({ children, titulo, acaoTopo, foco }: AppLayoutProps) 
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="card-metodo max-w-md p-8 text-center">
           <Logo />
-          <h1 className="mt-6 text-xl font-semibold">Seu acesso não está ativo</h1>
+          <h1 className="mt-6 text-xl font-semibold">{aluna ? "Seu acesso não está ativo" : "Você ainda não é aluna!"}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Não encontramos um acesso válido para este e-mail. Fale com o suporte no Grupo VIP.
+            {aluna
+              ? "O seu acesso ao método venceu ou foi pausado. Fala comigo no Grupo VIP que eu resolvo."
+              : "Não achei nenhuma compra do método com este e-mail."}
           </p>
+          {!aluna ? (
+            <a
+              href={PAGINA_VENDAS_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+            >
+              Torne-se aluna aqui
+            </a>
+          ) : null}
           <button type="button" onClick={onSair} className="mt-6 text-sm font-medium text-primary hover:underline">
             Sair
           </button>
