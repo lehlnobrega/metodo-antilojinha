@@ -50,7 +50,7 @@ O e-mail padrão do Supabase só entrega pra quem é da sua equipe no Supabase e
 ## 6. Importar os fluxos no n8n
 Para cada arquivo da pasta `n8n`: no n8n, **Create workflow > menu ... > Import from file**.
 * [ ] `1-lastlink-acesso.json`
-  * [ ] Nó **Conferir e preparar**: preencher no topo o `TOKEN_LASTLINK` (o token que aparece na Lastlink, na tela do webhook) e o `APP_URL` (endereço do app)
+  * [ ] Nó **Conferir e preparar**: preencher no topo o `TOKEN_LASTLINK` (o token que aparece na Lastlink, na tela do webhook). O endereço do app já está preenchido
   * [ ] Nós **Enviar convite**, **Liberar no banco** e **Bloquear no banco**: em Credential, escolher `Método Supabase`
   * [ ] Nó **Registrar na aba Vendas**: credencial `Google Planilhas`, colar o link da planilha, aba `Vendas`
   * [ ] Salvar e ligar o botão **Active**
@@ -60,7 +60,6 @@ Para cada arquivo da pasta `n8n`: no n8n, **Create workflow > menu ... > Import 
   * [ ] Clicar em **Test workflow** uma vez pra ver as alunas aparecendo na planilha
   * [ ] Salvar e ligar **Active**
 * [ ] `3-importar-alunas-antigas.json` (fica desligado, você roda na mão)
-  * [ ] Nó **Preparar**: preencher o `APP_URL` no topo
   * [ ] Mesmas credenciais dos outros, link da planilha, aba `Importar`
 
 ## 7. Webhook na Lastlink
