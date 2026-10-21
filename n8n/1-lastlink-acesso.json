@@ -1,0 +1,339 @@
+{
+  "name": "Método | Lastlink libera e bloqueia acesso",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "metodo-lastlink",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Lastlink (webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -900,
+        300
+      ],
+      "id": "0aa5fa4e-7692-4abc-aafb-8d2f41a634bf",
+      "webhookId": "93769ada-e86c-42b3-b2d9-00a9de65d4db"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===================== CONFIGURAÇÃO (preencha uma vez) =====================\n// Token que a Lastlink mostra na tela do webhook (o mesmo que chega no cabeçalho x-lastlink-token)\nconst TOKEN_LASTLINK = 'COLE_AQUI_O_TOKEN_DA_LASTLINK';\n// Endereço do app das alunas, sem barra no fim. Ex.: https://app.lnobrega.com\nconst APP_URL = 'https://COLE_AQUI_O_ENDERECO_DO_APP';\n// Parte do nome do produto na Lastlink. Deixe '' pra aceitar tudo o que chegar neste webhook.\nconst PRODUTO_CONTEM = '';\n// ===========================================================================\nconst SUPABASE_URL = 'https://ivfgpircfwwgpumrrcwp.supabase.co';\nif (TOKEN_LASTLINK.includes('COLE_AQUI') || APP_URL.includes('COLE_AQUI')) {\n  throw new Error('Preencha o TOKEN_LASTLINK e o APP_URL no topo do nó \"Conferir e preparar\".');\n}\n\nconst req = $input.first().json;\nconst token = (req.headers && req.headers['x-lastlink-token']) || '';\nif (token !== TOKEN_LASTLINK) throw new Error('Token da Lastlink não confere. Pedido ignorado por segurança.');\n\nconst body = req.body || {};\nconst data = body.Data || {};\nconst buyer = data.Buyer || {};\nconst purchase = data.Purchase || {};\nconst evento = body.Event || '';\nconst email = String(buyer.Email || '').toLowerCase().trim();\nif (!email) throw new Error('A Lastlink mandou um evento sem e-mail.');\n\nconst produtos = (data.Products || []).map((p) => p.Name).filter(Boolean).join(', ');\nconst LIBERAR = ['Purchase_Order_Confirmed', 'Recurrent_Payment'];\nconst BLOQUEAR = { Payment_Refund: 'reembolsada', Payment_Chargeback: 'cancelada' };\n\nlet acao = 'ignorar';\nif (LIBERAR.includes(evento)) acao = 'liberar';\nelse if (BLOQUEAR[evento]) acao = 'bloquear';\nif (PRODUTO_CONTEM && !produtos.toLowerCase().includes(PRODUTO_CONTEM.toLowerCase())) acao = 'ignorar';\n\n// A Lastlink manda a data sem fuso: é horário de Brasília\nconst pd = purchase.PaymentDate;\nconst dataCompra = pd ? (/(z|[+-]\\d\\d:?\\d\\d)$/i.test(pd) ? pd : pd + '-03:00') : new Date().toISOString();\n\nreturn [{\n  json: {\n    acao,\n    evento,\n    status_bloqueio: BLOQUEAR[evento] || null,\n    email,\n    nome: String(buyer.Name || '').trim(),\n    telefone: String(buyer.PhoneNumber || '').trim(),\n    pedido: purchase.PaymentId || '',\n    data_compra: dataCompra,\n    oferta: (data.Offer && data.Offer.Name) || '',\n    produtos,\n    valor: purchase.Price && purchase.Price.Value != null ? purchase.Price.Value : '',\n    teste: body.IsTest ? 'Sim' : 'Não',\n    app_url: APP_URL.replace(/\\/$/, ''),\n    supabase_url: SUPABASE_URL,\n  },\n}];"
+      },
+      "name": "Conferir e preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -680,
+        300
+      ],
+      "id": "770be05e-465e-42a2-8021-2621e124aaf4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "56f4ab1d-7416-4462-94ed-a45cd899b419",
+              "leftValue": "={{ $json.acao }}",
+              "rightValue": "liberar",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Liberar acesso?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -460,
+        300
+      ],
+      "id": "1a286c6a-eca5-4f11-8ee7-db47005f41f6"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.supabase_url }}/auth/v1/invite?redirect_to={{ encodeURIComponent($json.app_url + '/criar-senha') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $json.email, data: { nome: $json.nome } }) }}",
+        "options": {}
+      },
+      "name": "Enviar convite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        160
+      ],
+      "id": "816e976a-b513-4322-ae1e-cb94d118f6cd",
+      "onError": "continueRegularOutput",
+      "notes": "Cria o login e manda o e-mail pra ela criar a senha. Se ela já tinha login, segue em frente."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Conferir e preparar').first().json.supabase_url }}/rest/v1/rpc/lastlink_liberar",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_email: $('Conferir e preparar').first().json.email, p_nome: $('Conferir e preparar').first().json.nome, p_telefone: $('Conferir e preparar').first().json.telefone, p_pedido: $('Conferir e preparar').first().json.pedido, p_data_compra: $('Conferir e preparar').first().json.data_compra }) }}",
+        "options": {}
+      },
+      "name": "Liberar no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        160
+      ],
+      "id": "12c24953-2e22-4e08-ae9f-84db2b9a50bf"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cfca1425-f301-4c93-b309-920cf4c4e372",
+              "leftValue": "={{ $json.acao }}",
+              "rightValue": "bloquear",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Bloquear acesso?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        440
+      ],
+      "id": "80ccc5fd-353e-456c-9c30-324fa651a0f0"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.supabase_url }}/rest/v1/rpc/lastlink_bloquear",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_email: $json.email, p_status: $json.status_bloqueio }) }}",
+        "options": {}
+      },
+      "name": "Bloquear no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        380
+      ],
+      "id": "99e695c9-a12f-4553-b6f4-4ce28e1d6ec6"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Conferir e preparar').first().json;\nconst r = $input.first().json || {};\nconst resultado = r.resultado || 'ignorado';\nconst TEXTOS = {\n  nova: 'Acesso liberado (aluna nova)',\n  renovada: 'Acesso renovado por 1 ano',\n  sem_login: 'ERRO: o login não foi criado. Confira o SMTP do Supabase e rode de novo',\n  bloqueada: 'Acesso bloqueado (' + (d.status_bloqueio || '') + ')',\n  nao_encontrada: 'Reembolso de alguém que não está no app',\n  ignorado: 'Evento ignorado',\n};\n\nlet convite = '';\nif (d.acao === 'liberar') {\n  try {\n    const c = $('Enviar convite').first().json;\n    if (c.error) {\n      const txt = JSON.stringify(c.error);\n      convite = /already|registered|email_exists/i.test(txt) ? 'Já tinha login' : 'Não enviado: ' + txt.slice(0, 120);\n    } else {\n      convite = 'Enviado';\n    }\n  } catch (e) {\n    convite = '';\n  }\n}\n\nreturn [{\n  json: {\n    'Data': new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),\n    'Evento': d.evento,\n    'Nome': d.nome,\n    'E-mail': d.email,\n    'WhatsApp': d.telefone,\n    'Produto': d.produtos,\n    'Oferta': d.oferta,\n    'Valor': d.valor,\n    'Pedido': d.pedido,\n    'Resultado': TEXTOS[resultado] || resultado,\n    'E-mail de acesso': convite,\n    'Teste': d.teste,\n  },\n}];"
+      },
+      "name": "Montar linha da planilha",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "id": "cf1af6ce-0e85-4dfe-9d61-83510d02bfcd"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "COLE_AQUI_O_LINK_DA_PLANILHA",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Vendas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "name": "Registrar na aba Vendas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        420,
+        300
+      ],
+      "id": "f377446d-ed38-42c4-ab6e-90c5403fb821"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Se algo deu errado, a execução fica vermelha no n8n pra você ver.\nconst r = $('Montar linha da planilha').first().json;\nif (String(r['Resultado']).startsWith('ERRO')) throw new Error(r['Resultado'] + ' (' + r['E-mail'] + ')');\nreturn $input.all();"
+      },
+      "name": "Avisar se deu erro",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        300
+      ],
+      "id": "204e5004-b1f2-4f31-a768-115d51c37531"
+    }
+  ],
+  "connections": {
+    "Lastlink (webhook)": {
+      "main": [
+        [
+          {
+            "node": "Conferir e preparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conferir e preparar": {
+      "main": [
+        [
+          {
+            "node": "Liberar acesso?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Liberar acesso?": {
+      "main": [
+        [
+          {
+            "node": "Enviar convite",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bloquear acesso?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar convite": {
+      "main": [
+        [
+          {
+            "node": "Liberar no banco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Liberar no banco": {
+      "main": [
+        [
+          {
+            "node": "Montar linha da planilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bloquear acesso?": {
+      "main": [
+        [
+          {
+            "node": "Bloquear no banco",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar linha da planilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bloquear no banco": {
+      "main": [
+        [
+          {
+            "node": "Montar linha da planilha",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar linha da planilha": {
+      "main": [
+        [
+          {
+            "node": "Registrar na aba Vendas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar na aba Vendas": {
+      "main": [
+        [
+          {
+            "node": "Avisar se deu erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  },
+  "pinData": {}
+}

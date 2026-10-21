@@ -1,0 +1,220 @@
+{
+  "name": "Método | Importar alunas antigas (rodar 1 vez)",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Rodar importação (manual)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        300
+      ],
+      "id": "658f9dea-6f88-471b-b040-66569539eaca"
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "COLE_AQUI_O_LINK_DA_PLANILHA",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Importar",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "name": "Ler aba Importar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -580,
+        300
+      ],
+      "id": "24b3df19-0cb3-4d7d-b9d2-1f9054265bf0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ===================== CONFIGURAÇÃO (preencha uma vez) =====================\n// Endereço do app das alunas, sem barra no fim. Ex.: https://app.lnobrega.com\nconst APP_URL = 'https://COLE_AQUI_O_ENDERECO_DO_APP';\n// ===========================================================================\nconst SUPABASE_URL = 'https://ivfgpircfwwgpumrrcwp.supabase.co';\nif (APP_URL.includes('COLE_AQUI')) throw new Error('Preencha o APP_URL no topo deste nó.');\n\n// Lê as linhas da aba Importar: Nome | E-mail | WhatsApp | Data da compra (DD/MM/AAAA)\nfunction dataIso(v) {\n  const s = String(v || '').trim();\n  const m = s.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})/);\n  if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}T12:00:00-03:00`;\n  if (/^\\d{4}-\\d{2}-\\d{2}/.test(s)) return s.length === 10 ? s + 'T12:00:00-03:00' : s;\n  return new Date().toISOString();\n}\nconst saida = [];\nfor (const item of $input.all()) {\n  const l = item.json;\n  const email = String(l['E-mail'] || '').toLowerCase().trim();\n  if (!email || !email.includes('@')) continue;\n  if (String(l['Resultado'] || '').startsWith('Acesso')) continue; // já importada antes\n  saida.push({\n    json: {\n      email,\n      nome: String(l['Nome'] || '').trim(),\n      telefone: String(l['WhatsApp'] || '').trim(),\n      data_compra: dataIso(l['Data da compra']),\n      app_url: APP_URL.replace(/\\/$/, ''),\n      supabase_url: SUPABASE_URL,\n    },\n  });\n}\nif (!saida.length) throw new Error('Nenhuma aluna nova pra importar na aba Importar.');\nreturn saida;"
+      },
+      "name": "Preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -360,
+        300
+      ],
+      "id": "b3f65929-689e-4558-b624-f62fb5ff276f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.supabase_url }}/auth/v1/invite?redirect_to={{ encodeURIComponent($json.app_url + '/criar-senha') }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ email: $json.email, data: { nome: $json.nome } }) }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 3000
+            }
+          }
+        }
+      },
+      "name": "Enviar convite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -140,
+        300
+      ],
+      "id": "554d2d10-39b7-4a8a-967b-f73d30988e80",
+      "onError": "continueRegularOutput",
+      "notes": "Uma aluna a cada 3 segundos, pra não estourar o limite de e-mails."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Preparar').item.json.supabase_url }}/rest/v1/rpc/lastlink_liberar",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_email: $('Preparar').item.json.email, p_nome: $('Preparar').item.json.nome, p_telefone: $('Preparar').item.json.telefone, p_pedido: null, p_data_compra: $('Preparar').item.json.data_compra }) }}",
+        "options": {}
+      },
+      "name": "Liberar no banco",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        300
+      ],
+      "id": "5b45b296-4091-42ea-b979-e8766e6d64cf"
+    },
+    {
+      "parameters": {
+        "jsCode": "const TEXTOS = {\n  nova: 'Acesso liberado (aluna nova)',\n  renovada: 'Acesso renovado por 1 ano',\n  sem_login: 'ERRO: login não criado. Confira o SMTP do Supabase',\n};\nreturn $input.all().map((item, i) => {\n  const p = $('Preparar').itemMatching(i).json;\n  let convite = 'Enviado';\n  try {\n    const c = $('Enviar convite').itemMatching(i).json;\n    if (c.error) convite = /already|registered|email_exists/i.test(JSON.stringify(c.error)) ? 'Já tinha login' : 'Não enviado';\n  } catch (e) {}\n  const r = item.json.resultado;\n  return { json: { 'E-mail': p.email, 'Resultado': (TEXTOS[r] || r || 'ERRO') + ' | e-mail: ' + convite } };\n});"
+      },
+      "name": "Resultado de cada aluna",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        300
+      ],
+      "id": "25839fcc-0b94-40ac-ad51-822d8c501bb5"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "COLE_AQUI_O_LINK_DA_PLANILHA",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Importar",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "E-mail"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "name": "Anotar resultado na aba Importar",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        520,
+        300
+      ],
+      "id": "073db63c-886c-481c-8adc-c83273f33c49"
+    }
+  ],
+  "connections": {
+    "Rodar importação (manual)": {
+      "main": [
+        [
+          {
+            "node": "Ler aba Importar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler aba Importar": {
+      "main": [
+        [
+          {
+            "node": "Preparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar": {
+      "main": [
+        [
+          {
+            "node": "Enviar convite",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar convite": {
+      "main": [
+        [
+          {
+            "node": "Liberar no banco",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Liberar no banco": {
+      "main": [
+        [
+          {
+            "node": "Resultado de cada aluna",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resultado de cada aluna": {
+      "main": [
+        [
+          {
+            "node": "Anotar resultado na aba Importar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  },
+  "pinData": {}
+}

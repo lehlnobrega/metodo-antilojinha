@@ -1,0 +1,124 @@
+{
+  "name": "Método | Planilha de alunas e pesquisa",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
+      },
+      "name": "A cada 30 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "d8ab1725-6cc3-41f9-92ef-428433f19ed9"
+    },
+    {
+      "parameters": {},
+      "name": "Atualizar agora (manual)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        400
+      ],
+      "id": "c291335f-4ad8-4647-9052-f3d9ea7b9437"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "planilha_alunas",
+        "returnAll": true,
+        "filters": {}
+      },
+      "name": "Buscar alunas e respostas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -360,
+        300
+      ],
+      "id": "fd1905fd-e806-4941-b1b6-4c7533a326d3"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "COLE_AQUI_O_LINK_DA_PLANILHA",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Alunas",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "E-mail"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "name": "Atualizar aba Alunas",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -120,
+        300
+      ],
+      "id": "b9819240-5ce7-497f-8baa-563698c549e4"
+    }
+  ],
+  "connections": {
+    "A cada 30 minutos": {
+      "main": [
+        [
+          {
+            "node": "Buscar alunas e respostas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar agora (manual)": {
+      "main": [
+        [
+          {
+            "node": "Buscar alunas e respostas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar alunas e respostas": {
+      "main": [
+        [
+          {
+            "node": "Atualizar aba Alunas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  },
+  "pinData": {}
+}
