@@ -1,7 +1,7 @@
 # Como colocar o app do Método no ar pela Easypanel
 
 ## Antes de começar
-* [ ] Código novo no GitHub (repositório `lehlnobrega/metodolnobrega`)
+* [ ] Código novo no GitHub (repositório `lehlnobrega/metodo-antilojinha`)
 * [ ] Chave `service_role` do Supabase em mãos (Supabase > Project Settings > API Keys > legacy). Ela vai SÓ na Easypanel, nunca em conversa, print ou código
 * [ ] Chave da IA criada no Claude Console (platform.claude.com > API keys), começa com `sk-ant-`
 
@@ -15,8 +15,9 @@
 ## 1. Criar o app na Easypanel
 * [ ] Abrir o projeto na Easypanel e clicar em **+ Service > App**
 * [ ] Nome: `metodo-app`
-* [ ] Em **Source**, escolher **GitHub**, repositório `lehlnobrega/metodolnobrega`, branch `main`
+* [ ] Em **Source**, escolher **GitHub**, repositório `lehlnobrega/metodo-antilojinha`, branch `main`
 * [ ] Em **Build**, escolher **Dockerfile** (o arquivo já está pronto na raiz do projeto)
+* [ ] Ligar o **Auto Deploy** (na aba Source ou Deployments). Assim, toda vez que o código novo chegar no GitHub, a Easypanel publica sozinha
 
 ## 2. Variáveis de ambiente (aba Environment)
 Cole assim, trocando os valores entre aspas:
