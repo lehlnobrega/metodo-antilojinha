@@ -30,6 +30,7 @@ export const vencido = (a: ResumoAluna) => Boolean(a.acesso_ate) && new Date(a.a
 /** Situação da aluna pra mostrar como etiqueta. */
 export function situacao(a: ResumoAluna): { texto: string; cls: string } {
   if (a.status === "pausada") return { texto: "Pausada", cls: "bg-locked text-muted-foreground" };
+  if (a.status === "expirada") return { texto: "Acesso vencido", cls: "bg-destructive/10 text-destructive" };
   if (a.status === "reembolsada" || a.status === "cancelada") return { texto: a.status === "reembolsada" ? "Reembolsada" : "Cancelada", cls: "bg-destructive/10 text-destructive" };
   if (vencido(a)) return { texto: "Acesso vencido", cls: "bg-destructive/10 text-destructive" };
   if (vencendo(a)) return { texto: "Acesso vencendo", cls: "bg-accent-soft text-primary" };

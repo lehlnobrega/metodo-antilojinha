@@ -1,21 +1,20 @@
 {
-  "name": "Método | LastLink",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "lastlink-metodo-venda",
+        "path": "lastlink-metodo",
         "options": {}
       },
-      "name": "Webhook venda/renovação",
+      "name": "Webhook LastLink (Método)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -672,
-        224
+        -544,
+        128
       ],
-      "id": "f086d77d-ad6d-46bc-8f1f-7b0c96a8b53c",
-      "webhookId": "3b15329b-e0f0-4156-9254-3c66af6338f8"
+      "id": "a55217eb-604a-4cea-8ec7-cc22e264641e",
+      "webhookId": "a8c413c7-3e77-42c9-9f09-f38ca2fd28e0"
     },
     {
       "parameters": {
@@ -28,131 +27,84 @@
           },
           "conditions": [
             {
-              "id": "7ce28b73-93f0-4438-8596-25482d44223f",
+              "id": "evento-compra",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Purchase_Order_Confirmed",
               "operator": {
                 "type": "string",
                 "operation": "equals"
               }
-            },
-            {
-              "id": "2e0e81c6-d674-492d-908d-913ec10c74c4",
-              "leftValue": "={{ $json.body.Event }}",
-              "rightValue": "Recurrent_Payment",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
             }
           ],
-          "combinator": "or"
+          "combinator": "and"
         },
         "options": {}
       },
-      "name": "É compra ou renovação?",
+      "name": "É compra aprovada?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -448,
-        224
+        -320,
+        32
       ],
-      "id": "9a307250-027a-4d51-aff7-841a1ed4cebe"
+      "id": "085b87aa-74fa-4f0e-abc3-24c844a62da2"
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json.body.Data;\nconst email = (data.Buyer.Email || '').toLowerCase().trim();\nconst nome = (data.Buyer.Name || '').trim();\nconst primeiro = (nome.split(' ')[0] || '').toLowerCase();\n// O Método vale 1 ano a partir da compra (o banco calcula a data sozinho)\nconst ate = new Date();\nate.setFullYear(ate.getFullYear() + 1);\nreturn [{\n  json: {\n    email,\n    nome,\n    primeiro_nome: primeiro.charAt(0).toUpperCase() + primeiro.slice(1),\n    telefone: (data.Buyer.PhoneNumber || '').replace(/\\D/g, ''),\n    pedido: data.Purchase?.PaymentId || '',\n    acesso_ate: ate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),\n  },\n}];"
+        "jsCode": "const data = $input.first().json.body.Data;\nconst email = (data.Buyer.Email || '').toLowerCase().trim();\nconst nome = (data.Buyer.Name || '').trim();\nconst telefone = (data.Buyer.PhoneNumber || '').replace(/\\D/g, '');\nconst pedido = data.Purchase?.PaymentId || '';\nreturn [{\n  json: {\n    email,\n    nome,\n    primeiro_nome: nome.split(' ')[0] || '',\n    telefone,\n    pedido_lastlink: pedido,\n    data_compra: new Date().toISOString(),\n    status: 'ativa'\n  }\n}];"
       },
       "name": "Preparar dados",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -224,
-        224
+        -96,
+        -64
       ],
-      "id": "96b7d330-33fc-492d-a648-0d54ede8a241"
+      "id": "a0671226-a490-424c-a22a-e5dbcc84078e"
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://ivfgpircfwwgpumrrcwp.supabase.co/auth/v1/admin/users",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ email: $json.email, email_confirm: true }) }}",
-        "options": {}
+        "operation": "getAll",
+        "tableId": "alunas",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $json.email }}"
+            }
+          ]
+        }
       },
-      "name": "Criar login",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        0,
-        224
-      ],
-      "id": "00713015-4b4f-45df-a077-e37c40bf8d66",
-      "onError": "continueRegularOutput",
-      "notes": "Cria o login da aluna. Se ela já tinha, segue em frente."
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://ivfgpircfwwgpumrrcwp.supabase.co/rest/v1/rpc/lastlink_liberar",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ p_email: $('Preparar dados').first().json.email, p_nome: $('Preparar dados').first().json.nome, p_telefone: $('Preparar dados').first().json.telefone, p_pedido: $('Preparar dados').first().json.pedido }) }}",
-        "options": {}
-      },
-      "name": "Liberar acesso",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        224,
-        224
-      ],
-      "id": "581c1808-48de-409f-add5-2368a9f06c90",
-      "notes": "Cadastra ou renova: acesso ativo por 1 ano a partir de hoje."
-    },
-    {
-      "parameters": {
-        "resource": "messages-api",
-        "instanceName": "leticia",
-        "remoteJid": "={{ $('Preparar dados').first().json.telefone }}",
-        "messageText": "=oie, {{ $('Preparar dados').first().json.primeiro_nome }}! 👋\n\nSua compra foi confirmada e o seu acesso ao *Método Loja Online Lucrativa* já está liberado! 🎉\n\nPara criar sua senha e entrar no app, acesse o link abaixo:\n👉 metodo.lnobrega.com/primeiro-acesso\n\nUse o e-mail que você usou na compra para se cadastrar:\n📧 {{ $('Preparar dados').first().json.email }}\n\nDepois é só entrar por metodo.lnobrega.com com seu e-mail e senha. Seu acesso vale por 1 ano, até {{ $('Preparar dados').first().json.acesso_ate }}.\n\nQualquer dúvida é só me chamar aqui. Bem-vinda! 🎉",
-        "options_message": {}
-      },
-      "name": "Enviar texto",
-      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "name": "Buscar aluna",
+      "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        448,
-        224
+        144,
+        -64
       ],
-      "id": "dc8743d2-c69a-47e4-be1f-f474aca4aeca",
+      "alwaysOutputData": true,
+      "id": "b64c55ea-ba76-4deb-85c5-dad940c4c00f",
       "credentials": {
-        "evolutionApi": {
-          "id": "jFnQE7cpNaADuRY4",
-          "name": "Evolution account"
+        "supabaseApi": {
+          "id": "",
+          "name": "Método Supabase"
         }
       }
     },
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "lastlink-metodo-reembolso",
-        "options": {}
+        "jsCode": "const r = $input.first().json;\nconst dados = $('Preparar dados').first().json;\nreturn [{ json: { ...dados, ja_existe: !!(r && r.email) } }];"
       },
-      "name": "Webhook reembolso",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
+      "name": "Checar se já existe",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
-        -672,
-        520
+        352,
+        -64
       ],
-      "id": "9785eea6-ef97-42dd-99ff-d094d196d1cd",
-      "webhookId": "a8e833b0-4274-4e5c-a602-b0218d728fe8"
+      "id": "76890334-714d-4585-87e9-52b08c56cca6"
     },
     {
       "parameters": {
@@ -165,7 +117,140 @@
           },
           "conditions": [
             {
-              "id": "0919d7d3-41c5-4521-80f4-67dcdfdde744",
+              "id": "ja-existe",
+              "leftValue": "={{ $json.ja_existe }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Aluna já existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        560,
+        -64
+      ],
+      "id": "4716e4e0-b72c-4529-ae8e-f61736dfa608"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "alunas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $json.email }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "ativa"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.nome }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ $json.telefone }}"
+            },
+            {
+              "fieldId": "pedido_lastlink",
+              "fieldValue": "={{ $json.pedido_lastlink }}"
+            },
+            {
+              "fieldId": "data_compra",
+              "fieldValue": "={{ $json.data_compra }}"
+            }
+          ]
+        }
+      },
+      "name": "Reativar aluna",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        784,
+        -176
+      ],
+      "id": "656685d0-183f-444e-9ef3-73ae94eea000",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Método Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "alunas",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $json.nome }}"
+            },
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ $json.telefone }}"
+            },
+            {
+              "fieldId": "pedido_lastlink",
+              "fieldValue": "={{ $json.pedido_lastlink }}"
+            },
+            {
+              "fieldId": "data_compra",
+              "fieldValue": "={{ $json.data_compra }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "ativa"
+            }
+          ]
+        }
+      },
+      "name": "Cadastrar aluna",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        784,
+        48
+      ],
+      "id": "16aee239-659d-4437-844f-4dcc0838edab",
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Método Supabase"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "evento-reembolso",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Payment_Refund",
               "operator": {
@@ -174,9 +259,18 @@
               }
             },
             {
-              "id": "9ace6626-d48a-4342-8eef-043b26d8cc11",
+              "id": "evento-chargeback",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Payment_Chargeback",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "evento-fim-acesso",
+              "leftValue": "={{ $json.body.Event }}",
+              "rightValue": "Product_access_ended",
               "operator": {
                 "type": "string",
                 "operation": "equals"
@@ -187,27 +281,27 @@
         },
         "options": {}
       },
-      "name": "É reembolso?",
+      "name": "É reembolso, chargeback ou fim do acesso?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -448,
-        520
+        -320,
+        320
       ],
-      "id": "bd7edf12-44f1-4678-8155-359c2f10cac8"
+      "id": "384a2316-7039-4bd6-838a-c5514aed6b45"
     },
     {
       "parameters": {
-        "jsCode": "const b = $input.first().json.body;\nconst email = (b.Data.Buyer.Email || '').toLowerCase().trim();\nreturn [{ json: { email, status: b.Event === 'Payment_Chargeback' ? 'cancelada' : 'reembolsada' } }];"
+        "jsCode": "const data = $input.first().json.body.Data;\nconst email = (data.Buyer.Email || '').toLowerCase().trim();\nconst ev = $input.first().json.body.Event;\nconst status = ev === 'Product_access_ended' ? 'expirada' : ev === 'Payment_Chargeback' ? 'cancelada' : 'reembolsada';\nreturn [{ json: { email, status } }];"
       },
-      "name": "Extrair email",
+      "name": "Extrair e-mail",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -224,
-        520
+        -96,
+        320
       ],
-      "id": "d8dc8c13-18fb-487d-97a7-bb748edf308d"
+      "id": "b6c5daf3-3cfa-4f65-9d63-19fbb36d9e34"
     },
     {
       "parameters": {
@@ -235,26 +329,61 @@
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        0,
-        520
+        144,
+        320
       ],
-      "id": "e4c229d0-bb12-41f8-936a-a07e5129738e",
-      "alwaysOutputData": true
+      "id": "df996205-afec-467c-b13c-569f0f4d3185",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "",
+          "name": "Método Supabase"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "leticia",
+        "remoteJid": "={{ $json.telefone }}",
+        "messageText": "=oie, {{ $json.nome.split(' ')[0] }}! 👋\n\nSua compra foi confirmada e seu acesso ao Método Loja Online Lucrativa já está liberado!\n\nPara criar sua senha e entrar no app, acesse o link abaixo:\n👉 metodo.lnobrega.com/primeiro-acesso\n\nUse o e-mail que você usou na compra para se cadastrar:\n📧 {{ $json.email }}\n\nDepois é só entrar por metodo.lnobrega.com com seu e-mail e senha. Seu acesso vale por 1 ano.\n\nQualquer dúvida é só me chamar aqui. Bem-vinda! 🎉",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        48
+      ],
+      "id": "1a34c04c-efef-4e4c-bf32-7e657b11a6ef",
+      "name": "Enviar texto",
+      "credentials": {
+        "evolutionApi": {
+          "id": "jFnQE7cpNaADuRY4",
+          "name": "Evolution account"
+        }
+      }
     }
   ],
   "connections": {
-    "Webhook venda/renovação": {
+    "Webhook LastLink (Método)": {
       "main": [
         [
           {
-            "node": "É compra ou renovação?",
+            "node": "É compra aprovada?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "É reembolso, chargeback ou fim do acesso?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "É compra ou renovação?": {
+    "É compra aprovada?": {
       "main": [
         [
           {
@@ -269,25 +398,54 @@
       "main": [
         [
           {
-            "node": "Criar login",
+            "node": "Buscar aluna",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Criar login": {
+    "Buscar aluna": {
       "main": [
         [
           {
-            "node": "Liberar acesso",
+            "node": "Checar se já existe",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Liberar acesso": {
+    "Checar se já existe": {
+      "main": [
+        [
+          {
+            "node": "Aluna já existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aluna já existe?": {
+      "main": [
+        [
+          {
+            "node": "Reativar aluna",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cadastrar aluna",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reativar aluna": {
       "main": [
         [
           {
@@ -298,29 +456,29 @@
         ]
       ]
     },
-    "Webhook reembolso": {
+    "Cadastrar aluna": {
       "main": [
         [
           {
-            "node": "É reembolso?",
+            "node": "Enviar texto",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "É reembolso?": {
+    "É reembolso, chargeback ou fim do acesso?": {
       "main": [
         [
           {
-            "node": "Extrair email",
+            "node": "Extrair e-mail",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extrair email": {
+    "Extrair e-mail": {
       "main": [
         [
           {
@@ -332,8 +490,9 @@
       ]
     }
   },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
   "pinData": {},
-  "settings": {
-    "executionOrder": "v1"
-  }
+  "name": "Método | LastLink"
 }

@@ -21,8 +21,19 @@ export const criarSenhaPrimeiroAcesso = createServerFn({ method: "POST" })
       const { data: aluna } = await admin.from("alunas").select("id").ilike("email", data.email).maybeSingle();
       if (!aluna) return { situacao: "sem_acesso" };
 
-      const { data: u, error } = await admin.auth.admin.getUserById(aluna.id);
-      if (error || !u.user) return { situacao: "erro" };
+      const { data: u } = await admin.auth.admin.getUserById(aluna.id);
+      if (!u?.user) {
+        // Cadastrada pelo n8n e ainda sem login: cria o login com a senha dela.
+        // O banco liga esse login ao cadastro pelo e-mail (trigger ligar_login_a_aluna).
+        const { error: e1 } = await admin.auth.admin.createUser({
+          email: data.email,
+          password: data.senha,
+          email_confirm: true,
+          user_metadata: { senha_criada: true },
+        });
+        if (e1) return { situacao: /already|registered|exists/i.test(e1.message) ? "ja_criou" : "erro" };
+        return { situacao: "criada" };
+      }
 
       // Já criou senha: marcou no primeiro acesso / criar senha, ou já entrou sem ter vindo de convite
       const meta = (u.user.user_metadata ?? {}) as Record<string, unknown>;
