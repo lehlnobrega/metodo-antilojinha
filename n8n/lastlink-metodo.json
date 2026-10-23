@@ -1,21 +1,21 @@
 {
-  "name": "Método | LastLink libera acesso + WhatsApp",
+  "name": "Método | LastLink",
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "lastlink-metodo",
+        "path": "lastlink-metodo-venda",
         "options": {}
       },
-      "name": "Webhook LastLink (Método)",
+      "name": "Webhook venda/renovação",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [
-        -700,
-        300
+        -672,
+        224
       ],
-      "id": "721502bf-e19d-46e8-a7f6-6445a8e97d36",
-      "webhookId": "2f6c1e75-6da9-4f38-a5f3-0a90e34a7970"
+      "id": "f086d77d-ad6d-46bc-8f1f-7b0c96a8b53c",
+      "webhookId": "3b15329b-e0f0-4156-9254-3c66af6338f8"
     },
     {
       "parameters": {
@@ -28,7 +28,7 @@
           },
           "conditions": [
             {
-              "id": "e4e40eea-1caf-4128-88e5-be7946e7613b",
+              "id": "7ce28b73-93f0-4438-8596-25482d44223f",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Purchase_Order_Confirmed",
               "operator": {
@@ -37,7 +37,7 @@
               }
             },
             {
-              "id": "95ccd431-cd45-4296-bab1-87c7893c3229",
+              "id": "2e0e81c6-d674-492d-908d-913ec10c74c4",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Recurrent_Payment",
               "operator": {
@@ -54,23 +54,23 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -480,
-        160
+        -448,
+        224
       ],
-      "id": "fc25d2d1-67b7-4b5b-9261-cfe6f6a0cbb2"
+      "id": "9a307250-027a-4d51-aff7-841a1ed4cebe"
     },
     {
       "parameters": {
-        "jsCode": "const data = $input.first().json.body.Data;\nconst email = (data.Buyer.Email || '').toLowerCase().trim();\nconst nome = (data.Buyer.Name || '').trim();\nconst primeiro = (nome.split(' ')[0] || '').toLowerCase();\n// Método vale 1 ano. O Margem Certa vai até a mesma data.\nconst expira = new Date();\nexpira.setFullYear(expira.getFullYear() + 1);\nreturn [{\n  json: {\n    email,\n    nome,\n    primeiro_nome: primeiro.charAt(0).toUpperCase() + primeiro.slice(1),\n    telefone: (data.Buyer.PhoneNumber || '').replace(/\\D/g, ''),\n    pedido: data.Purchase?.PaymentId || '',\n    expires_at: expira.toISOString(),\n    acesso_ate: expira.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),\n  },\n}];"
+        "jsCode": "const data = $input.first().json.body.Data;\nconst email = (data.Buyer.Email || '').toLowerCase().trim();\nconst nome = (data.Buyer.Name || '').trim();\nconst primeiro = (nome.split(' ')[0] || '').toLowerCase();\n// O Método vale 1 ano a partir da compra (o banco calcula a data sozinho)\nconst ate = new Date();\nate.setFullYear(ate.getFullYear() + 1);\nreturn [{\n  json: {\n    email,\n    nome,\n    primeiro_nome: primeiro.charAt(0).toUpperCase() + primeiro.slice(1),\n    telefone: (data.Buyer.PhoneNumber || '').replace(/\\D/g, ''),\n    pedido: data.Purchase?.PaymentId || '',\n    acesso_ate: ate.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),\n  },\n}];"
       },
       "name": "Preparar dados",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -260,
-        160
+        -224,
+        224
       ],
-      "id": "19bf7154-94db-40d3-b07d-5e7f087e024e"
+      "id": "96b7d330-33fc-492d-a648-0d54ede8a241"
     },
     {
       "parameters": {
@@ -87,11 +87,12 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -40,
-        160
+        0,
+        224
       ],
-      "id": "602a6273-d48c-4add-b1e7-9053f0c6a4aa",
-      "onError": "continueRegularOutput"
+      "id": "00713015-4b4f-45df-a077-e37c40bf8d66",
+      "onError": "continueRegularOutput",
+      "notes": "Cria o login da aluna. Se ela já tinha, segue em frente."
     },
     {
       "parameters": {
@@ -104,176 +105,54 @@
         "jsonBody": "={{ JSON.stringify({ p_email: $('Preparar dados').first().json.email, p_nome: $('Preparar dados').first().json.nome, p_telefone: $('Preparar dados').first().json.telefone, p_pedido: $('Preparar dados').first().json.pedido }) }}",
         "options": {}
       },
-      "name": "Liberar no Método",
+      "name": "Liberar acesso",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        180,
-        160
+        224,
+        224
       ],
-      "id": "458d2e10-fc77-467d-b58d-8975a1bfc7d8"
-    },
-    {
-      "parameters": {
-        "operation": "getAll",
-        "tableId": "users",
-        "limit": 1,
-        "filterType": "string",
-        "filterString": "=email=eq.{{ $('Preparar dados').first().json.email }}"
-      },
-      "name": "Buscar no Margem Certa",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        400,
-        160
-      ],
-      "id": "60e8a265-7224-4947-bd90-daf9e32a84a1",
-      "alwaysOutputData": true,
-      "credentials": {
-        "supabaseApi": {
-          "id": "Q6CMvB8onJaGg8LC",
-          "name": "Margem Certa Supabase"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 1
-          },
-          "conditions": [
-            {
-              "id": "f69406d1-8c56-4570-ae0d-87dac376549f",
-              "leftValue": "={{ !!$json.id }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "name": "Já tem Margem Certa?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        620,
-        160
-      ],
-      "id": "416f4312-04f0-4010-9f41-f48e687a25d4"
-    },
-    {
-      "parameters": {
-        "operation": "update",
-        "tableId": "users",
-        "filterType": "string",
-        "filterString": "=email=eq.{{ $('Preparar dados').first().json.email }}",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "status",
-              "fieldValue": "active"
-            },
-            {
-              "fieldId": "expires_at",
-              "fieldValue": "={{ $('Preparar dados').first().json.expires_at }}"
-            }
-          ]
-        }
-      },
-      "name": "Atualizar Margem Certa",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        840,
-        60
-      ],
-      "id": "3feb510e-6e58-4a59-93d5-437425445957",
-      "credentials": {
-        "supabaseApi": {
-          "id": "Q6CMvB8onJaGg8LC",
-          "name": "Margem Certa Supabase"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "tableId": "users",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "email",
-              "fieldValue": "={{ $('Preparar dados').first().json.email }}"
-            },
-            {
-              "fieldId": "first_name",
-              "fieldValue": "={{ $('Preparar dados').first().json.primeiro_nome }}"
-            },
-            {
-              "fieldId": "status",
-              "fieldValue": "active"
-            },
-            {
-              "fieldId": "plan_type",
-              "fieldValue": "annual"
-            },
-            {
-              "fieldId": "expires_at",
-              "fieldValue": "={{ $('Preparar dados').first().json.expires_at }}"
-            },
-            {
-              "fieldId": "is_admin",
-              "fieldValue": false
-            }
-          ]
-        }
-      },
-      "name": "Criar no Margem Certa",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        840,
-        260
-      ],
-      "id": "1933f351-9b79-4f12-8dbb-67bc8e652738",
-      "credentials": {
-        "supabaseApi": {
-          "id": "Q6CMvB8onJaGg8LC",
-          "name": "Margem Certa Supabase"
-        }
-      }
+      "id": "581c1808-48de-409f-add5-2368a9f06c90",
+      "notes": "Cadastra ou renova: acesso ativo por 1 ano a partir de hoje."
     },
     {
       "parameters": {
         "resource": "messages-api",
         "instanceName": "leticia",
         "remoteJid": "={{ $('Preparar dados').first().json.telefone }}",
-        "messageText": "=oie, {{ $('Preparar dados').first().json.primeiro_nome }}! 👋\n\nSua compra foi confirmada e o seu acesso ao *Método Loja Online Lucrativa* já está liberado! 🎉\n\n*1. Crie a sua senha do app do Método:*\n👉 metodo.lnobrega.com/primeiro-acesso\n\n*2. Você também tem acesso ao Margem Certa*, a ferramenta de precificação. Crie a sua senha lá:\n👉 margemcerta.online/criar-senha\n\nUse o e-mail da compra nos dois:\n📧 {{ $('Preparar dados').first().json.email }}\n\nO seu acesso vale por 1 ano, até {{ $('Preparar dados').first().json.acesso_ate }}.\n\nQualquer dúvida é só me chamar aqui. Bem-vinda! 💗",
+        "messageText": "=oie, {{ $('Preparar dados').first().json.primeiro_nome }}! 👋\n\nSua compra foi confirmada e o seu acesso ao *Método Loja Online Lucrativa* já está liberado! 🎉\n\nPara criar sua senha e entrar no app, acesse o link abaixo:\n👉 metodo.lnobrega.com/primeiro-acesso\n\nUse o e-mail que você usou na compra para se cadastrar:\n📧 {{ $('Preparar dados').first().json.email }}\n\nDepois é só entrar por metodo.lnobrega.com com seu e-mail e senha. Seu acesso vale por 1 ano, até {{ $('Preparar dados').first().json.acesso_ate }}.\n\nQualquer dúvida é só me chamar aqui. Bem-vinda! 🎉",
         "options_message": {}
       },
       "name": "Enviar texto",
       "type": "n8n-nodes-evolution-api.evolutionApi",
       "typeVersion": 1,
       "position": [
-        1060,
-        160
+        448,
+        224
       ],
-      "id": "989dfb04-b8b5-4317-8fef-bb5e9f180519",
+      "id": "dc8743d2-c69a-47e4-be1f-f474aca4aeca",
       "credentials": {
         "evolutionApi": {
           "id": "jFnQE7cpNaADuRY4",
           "name": "Evolution account"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lastlink-metodo-reembolso",
+        "options": {}
+      },
+      "name": "Webhook reembolso",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        520
+      ],
+      "id": "9785eea6-ef97-42dd-99ff-d094d196d1cd",
+      "webhookId": "a8e833b0-4274-4e5c-a602-b0218d728fe8"
     },
     {
       "parameters": {
@@ -286,7 +165,7 @@
           },
           "conditions": [
             {
-              "id": "5d5c3252-f551-4f16-b761-f546d67696aa",
+              "id": "0919d7d3-41c5-4521-80f4-67dcdfdde744",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Payment_Refund",
               "operator": {
@@ -295,7 +174,7 @@
               }
             },
             {
-              "id": "019f0617-4fdb-4597-940f-6af82841c85a",
+              "id": "9ace6626-d48a-4342-8eef-043b26d8cc11",
               "leftValue": "={{ $json.body.Event }}",
               "rightValue": "Payment_Chargeback",
               "operator": {
@@ -308,92 +187,67 @@
         },
         "options": {}
       },
-      "name": "É reembolso ou chargeback?",
+      "name": "É reembolso?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        -480,
-        460
+        -448,
+        520
       ],
-      "id": "a8c756ef-82cc-4d81-b9f9-1ce8ce01b44e"
+      "id": "bd7edf12-44f1-4678-8155-359c2f10cac8"
     },
     {
       "parameters": {
         "jsCode": "const b = $input.first().json.body;\nconst email = (b.Data.Buyer.Email || '').toLowerCase().trim();\nreturn [{ json: { email, status: b.Event === 'Payment_Chargeback' ? 'cancelada' : 'reembolsada' } }];"
       },
-      "name": "Extrair e-mail",
+      "name": "Extrair email",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -260,
-        460
+        -224,
+        520
       ],
-      "id": "efe46740-3277-4ed7-b9ce-6ba3fd479fc0"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://ivfgpircfwwgpumrrcwp.supabase.co/rest/v1/rpc/lastlink_bloquear",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ p_email: $json.email, p_status: $json.status }) }}",
-        "options": {}
-      },
-      "name": "Tirar acesso do Método",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -40,
-        460
-      ],
-      "id": "5a718ee2-2597-431a-a300-4d196710abd5"
+      "id": "d8dc8c13-18fb-487d-97a7-bb748edf308d"
     },
     {
       "parameters": {
         "operation": "update",
-        "tableId": "users",
-        "filterType": "string",
-        "filterString": "=email=eq.{{ $('Extrair e-mail').first().json.email }}",
+        "tableId": "alunas",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email",
+              "condition": "eq",
+              "keyValue": "={{ $json.email }}"
+            }
+          ]
+        },
         "fieldsUi": {
           "fieldValues": [
             {
               "fieldId": "status",
-              "fieldValue": "expired"
+              "fieldValue": "={{ $json.status }}"
             }
           ]
         }
       },
-      "name": "Tirar acesso do Margem Certa",
+      "name": "Tirar acesso",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
       "position": [
-        180,
-        460
+        0,
+        520
       ],
-      "id": "696bd446-3535-4d7f-b810-817f05615a6c",
-      "credentials": {
-        "supabaseApi": {
-          "id": "Q6CMvB8onJaGg8LC",
-          "name": "Margem Certa Supabase"
-        }
-      },
-      "alwaysOutputData": true,
-      "onError": "continueRegularOutput"
+      "id": "e4c229d0-bb12-41f8-936a-a07e5129738e",
+      "alwaysOutputData": true
     }
   ],
   "connections": {
-    "Webhook LastLink (Método)": {
+    "Webhook venda/renovação": {
       "main": [
         [
           {
             "node": "É compra ou renovação?",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "É reembolso ou chargeback?",
             "type": "main",
             "index": 0
           }
@@ -426,54 +280,14 @@
       "main": [
         [
           {
-            "node": "Liberar no Método",
+            "node": "Liberar acesso",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Liberar no Método": {
-      "main": [
-        [
-          {
-            "node": "Buscar no Margem Certa",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Buscar no Margem Certa": {
-      "main": [
-        [
-          {
-            "node": "Já tem Margem Certa?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Já tem Margem Certa?": {
-      "main": [
-        [
-          {
-            "node": "Atualizar Margem Certa",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Criar no Margem Certa",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Atualizar Margem Certa": {
+    "Liberar acesso": {
       "main": [
         [
           {
@@ -484,44 +298,33 @@
         ]
       ]
     },
-    "Criar no Margem Certa": {
+    "Webhook reembolso": {
       "main": [
         [
           {
-            "node": "Enviar texto",
+            "node": "É reembolso?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "É reembolso ou chargeback?": {
+    "É reembolso?": {
       "main": [
         [
           {
-            "node": "Extrair e-mail",
+            "node": "Extrair email",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extrair e-mail": {
+    "Extrair email": {
       "main": [
         [
           {
-            "node": "Tirar acesso do Método",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tirar acesso do Método": {
-      "main": [
-        [
-          {
-            "node": "Tirar acesso do Margem Certa",
+            "node": "Tirar acesso",
             "type": "main",
             "index": 0
           }
