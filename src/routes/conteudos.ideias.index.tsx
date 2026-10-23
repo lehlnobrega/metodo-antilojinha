@@ -1,6 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, CalendarPlus, ExternalLink, Heart, Images, Instagram, Link2, Music2, Search, Video } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarPlus,
+  ExternalLink,
+  Heart,
+  Images,
+  Instagram,
+  Link2,
+  Music2,
+  Search,
+  Video,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +24,7 @@ import {
   type ConteudoAcervo,
   DECISOES,
   type Decisao,
+  embedPanda,
   FORMATOS_ACERVO,
   type Nicho,
   TIPOS_ACERVO,
@@ -30,7 +42,13 @@ import type { CamposConteudo } from "@/lib/dados-loja";
 import { hojeSaoPaulo } from "@/lib/formato";
 import { cn } from "@/lib/utils";
 
-type Busca = { aba?: "formatos" | undefined; nicho?: string | undefined; tipo?: string | undefined; formato?: string | undefined; salvos?: boolean | undefined };
+type Busca = {
+  aba?: "formatos" | undefined;
+  nicho?: string | undefined;
+  tipo?: string | undefined;
+  formato?: string | undefined;
+  salvos?: boolean | undefined;
+};
 
 export const Route = createFileRoute("/conteudos/ideias/")({
   validateSearch: (s: Record<string, unknown>): Busca => {
@@ -46,9 +64,17 @@ export const Route = createFileRoute("/conteudos/ideias/")({
   head: () => ({
     meta: [
       { title: "Ideias de conteúdo | Método" },
-      { name: "description", content: "Banco de ideias com filtros por nicho, tipo e formato, e os formatos que estão viralizando." },
+      {
+        name: "description",
+        content:
+          "Banco de ideias com filtros por nicho, tipo e formato, e os formatos que estão viralizando.",
+      },
       { property: "og:title", content: "Ideias de conteúdo | Método" },
-      { property: "og:description", content: "Banco de ideias com filtros por nicho, tipo e formato, e os formatos que estão viralizando." },
+      {
+        property: "og:description",
+        content:
+          "Banco de ideias com filtros por nicho, tipo e formato, e os formatos que estão viralizando.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -62,7 +88,10 @@ function Ideias() {
   const atual = busca.aba ?? "banco";
   return (
     <AppLayout titulo="Ideias de conteúdo">
-      <Link to="/conteudos" className="-mt-2 mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary">
+      <Link
+        to="/conteudos"
+        className="-mt-2 mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary"
+      >
         <ArrowLeft className="size-4" /> Voltar aos conteúdos
       </Link>
       <div className="mb-6 flex">
@@ -77,10 +106,14 @@ function Ideias() {
               key={v}
               role="tab"
               aria-selected={atual === v}
-              onClick={() => navigate({ search: v === "banco" ? {} : { aba: "formatos" }, replace: true })}
+              onClick={() =>
+                navigate({ search: v === "banco" ? {} : { aba: "formatos" }, replace: true })
+              }
               className={cn(
                 "rounded-lg px-4 py-1.5 text-sm font-medium transition-colors",
-                atual === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                atual === v
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {r}
@@ -107,7 +140,10 @@ function BancoIdeias() {
   const [limite, setLimite] = useState(POR_VEZ);
   const [calendario, setCalendario] = useState<CamposConteudo | null>(null);
 
-  const nomeNicho = useMemo(() => new Map((nichos.data ?? []).map((n) => [n.id, n])), [nichos.data]);
+  const nomeNicho = useMemo(
+    () => new Map((nichos.data ?? []).map((n) => [n.id, n])),
+    [nichos.data],
+  );
   const setSalvas = salvas.data ?? new Set<number>();
 
   const itens = useMemo(() => {
@@ -118,14 +154,17 @@ function BancoIdeias() {
       if (busca.formato && c.formato !== busca.formato) return false;
       if (busca.salvos && !setSalvas.has(c.id)) return false;
       if (q) {
-        const alvo = `${c.titulo} ${c.feedback ?? ""} ${nomeNicho.get(c.nicho_id)?.nome ?? ""}`.toLowerCase();
+        const alvo =
+          `${c.titulo} ${c.feedback ?? ""} ${nomeNicho.get(c.nicho_id)?.nome ?? ""}`.toLowerCase();
         if (!alvo.includes(q)) return false;
       }
       return true;
     });
   }, [conteudos.data, busca, texto, setSalvas, nomeNicho]);
 
-  const temFiltro = Boolean(busca.nicho || busca.tipo || busca.formato || busca.salvos || texto.trim());
+  const temFiltro = Boolean(
+    busca.nicho || busca.tipo || busca.formato || busca.salvos || texto.trim(),
+  );
 
   const mudar = (p: Partial<Busca>) => {
     setLimite(POR_VEZ);
@@ -171,9 +210,14 @@ function BancoIdeias() {
 
   return (
     <>
-      <CardConteudo aberto={calendario !== null} inicial={calendario} onFechar={() => setCalendario(null)} />
+      <CardConteudo
+        aberto={calendario !== null}
+        inicial={calendario}
+        onFechar={() => setCalendario(null)}
+      />
       <p className="mb-5 max-w-2xl text-[15px] text-muted-foreground">
-        Todas as referências num lugar só. Filtra pelo seu nicho, mas vale olhar os outros também: ideia boa de um nicho pode virar a melhor ideia do seu.
+        Todas as referências num lugar só. Filtra pelo seu nicho, mas vale olhar os outros também:
+        ideia boa de um nicho pode virar a melhor ideia do seu.
       </p>
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
@@ -194,7 +238,10 @@ function BancoIdeias() {
           <Dropdown
             rotulo="Nicho"
             valor={busca.nicho}
-            opcoes={nichosComConteudo.map((n) => ({ valor: String(n.id), rotulo: `${n.emoji ?? ""} ${n.nome}`.trim() }))}
+            opcoes={nichosComConteudo.map((n) => ({
+              valor: String(n.id),
+              rotulo: `${n.emoji ?? ""} ${n.nome}`.trim(),
+            }))}
             onChange={(v) => mudar({ nicho: v })}
           />
           <Dropdown
@@ -215,11 +262,15 @@ function BancoIdeias() {
             onClick={() => mudar({ salvos: !busca.salvos })}
             className={cn(
               "inline-flex h-11 items-center justify-center gap-2 rounded-full border px-5 text-sm font-medium transition-colors",
-              busca.salvos ? "border-primary bg-accent-soft text-primary" : "border-border bg-surface hover:border-primary",
+              busca.salvos
+                ? "border-primary bg-accent-soft text-primary"
+                : "border-border bg-surface hover:border-primary",
             )}
           >
             <Heart className={cn("size-4", busca.salvos && "fill-current")} /> Só os salvos
-            {setSalvas.size ? <span className="text-xs text-muted-foreground">({setSalvas.size})</span> : null}
+            {setSalvas.size ? (
+              <span className="text-xs text-muted-foreground">({setSalvas.size})</span>
+            ) : null}
           </button>
         </div>
       </div>
@@ -237,15 +288,29 @@ function BancoIdeias() {
       {conteudos.isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : conteudos.isError ? (
-        <p className="text-sm text-destructive">Não foi possível carregar: {conteudos.error.message}</p>
+        <p className="text-sm text-destructive">
+          Não foi possível carregar: {conteudos.error.message}
+        </p>
       ) : (conteudos.data ?? []).length === 0 ? (
-        <EstadoVazio titulo="As ideias estão chegando" texto="Logo aparecem aqui os conteúdos separados pra te inspirar." />
+        <EstadoVazio
+          titulo="As ideias estão chegando"
+          texto="Logo aparecem aqui os conteúdos separados pra te inspirar."
+        />
       ) : itens.length === 0 ? (
         <EstadoVazio
-          titulo={busca.salvos && !setSalvas.size ? "Você ainda não salvou nenhuma ideia" : "Nenhum conteúdo com esses filtros"}
-          {...(busca.salvos && !setSalvas.size ? { texto: "Toca no coração das ideias que você quer guardar pra depois." } : {})}
+          titulo={
+            busca.salvos && !setSalvas.size
+              ? "Você ainda não salvou nenhuma ideia"
+              : "Nenhum conteúdo com esses filtros"
+          }
+          {...(busca.salvos && !setSalvas.size
+            ? { texto: "Toca no coração das ideias que você quer guardar pra depois." }
+            : {})}
           acao={
-            <button onClick={limpar} className="h-11 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
+            <button
+              onClick={limpar}
+              className="h-11 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+            >
               Ver todas as ideias
             </button>
           }
@@ -285,7 +350,9 @@ function BancoIdeias() {
           ) : null}
         </>
       )}
-      <p className="mt-10 text-center text-xs text-muted-foreground">Inspiração, não cópia. Entende a lógica e traz pra sua loja.</p>
+      <p className="mt-10 text-center text-xs text-muted-foreground">
+        Inspiração, não cópia. Entende a lógica e traz pra sua loja.
+      </p>
     </>
   );
 }
@@ -319,7 +386,9 @@ function CardIdeia({
         title={salva ? "Tirar dos salvos" : "Salvar ideia"}
         className={cn(
           "absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-full transition-colors",
-          salva ? "bg-accent-soft text-primary" : "text-muted-foreground hover:bg-muted hover:text-primary",
+          salva
+            ? "bg-accent-soft text-primary"
+            : "text-muted-foreground hover:bg-muted hover:text-primary",
         )}
       >
         <Heart className={cn("size-5 transition-transform", salva && "scale-110 fill-current")} />
@@ -349,7 +418,10 @@ function CardIdeia({
           <div className="rounded-[4px_16px_16px_16px] bg-muted px-3 py-2.5 text-[13.5px] leading-relaxed">
             <p className={cn("whitespace-pre-line", !aberto && "line-clamp-4")}>{c.feedback}</p>
             {longo ? (
-              <button onClick={() => setAberto(!aberto)} className="mt-1 text-xs font-medium text-primary hover:underline">
+              <button
+                onClick={() => setAberto(!aberto)}
+                className="mt-1 text-xs font-medium text-primary hover:underline"
+              >
                 {aberto ? "ver menos" : "ver mais"}
               </button>
             ) : null}
@@ -415,59 +487,106 @@ function Formatos() {
       {formatos.isLoading ? (
         <p className="text-sm text-muted-foreground">Carregando...</p>
       ) : formatos.isError ? (
-        <p className="text-sm text-destructive">Não foi possível carregar: {formatos.error.message}</p>
+        <p className="text-sm text-destructive">
+          Não foi possível carregar: {formatos.error.message}
+        </p>
       ) : (formatos.data ?? []).length === 0 ? (
-        <EstadoVazio titulo="Os formatos estão chegando" texto="Logo aparecem aqui os formatos que estão viralizando, com vídeo de referência." />
+        <EstadoVazio
+          titulo="Os formatos estão chegando"
+          texto="Logo aparecem aqui os formatos que estão viralizando, com vídeo de referência."
+        />
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid max-w-4xl grid-cols-1 gap-4">
           {(formatos.data ?? []).map((f) => {
             const d = decisoes.data?.get(f.id);
             return (
-              <article key={f.id} className="card-metodo flex flex-col p-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <h3 className="text-[17px] font-semibold tracking-[-0.015em]">{f.nome}</h3>
-                  {f.link ? (
-                    <a
-                      href={f.link}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-[12.5px] font-medium hover:border-primary hover:text-primary"
-                    >
-                      <Video className="size-3.5" /> Ver vídeo de referência <ExternalLink className="size-3" />
-                    </a>
-                  ) : null}
-                </div>
-                <dl className="mt-4 grid gap-3">
-                  {(
-                    [
-                      ["O que é", f.o_que_e],
-                      ["Por que viraliza", f.por_que],
-                      ["Como adaptar", f.como_adaptar],
-                    ] as const
-                  ).map(([r, v]) =>
-                    v ? (
-                      <div key={r}>
-                        <dt className="text-xs font-semibold text-muted-foreground">{r}</dt>
-                        <dd className="mt-0.5 whitespace-pre-line text-sm leading-relaxed">{v}</dd>
-                      </div>
-                    ) : null,
-                  )}
-                </dl>
-                <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border pt-4">
-                  <span className="mr-1 text-[12.5px] text-muted-foreground">Pra minha loja:</span>
-                  {DECISOES.map((o) => (
-                    <button
-                      key={o.valor}
-                      onClick={() => decidir(f.id, o.valor)}
-                      aria-pressed={d === o.valor}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-[12.5px] font-medium transition-colors",
-                        d === o.valor ? "border-foreground bg-foreground text-surface" : "border-border bg-surface hover:border-foreground",
-                      )}
-                    >
-                      {o.rotulo}
-                    </button>
-                  ))}
+              <article
+                key={f.id}
+                className={cn(
+                  "card-metodo flex flex-col gap-5 p-5 sm:p-6",
+                  embedPanda(f.link) && "sm:flex-row",
+                )}
+              >
+                {embedPanda(f.link) ? (
+                  <figure className="mx-auto w-full max-w-[240px] shrink-0 sm:mx-0 sm:w-[220px]">
+                    <div className="relative aspect-[9/16] overflow-hidden rounded-2xl bg-muted">
+                      <iframe
+                        src={embedPanda(f.link)!}
+                        title={`Vídeo de referência: ${f.nome}`}
+                        allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture"
+                        allowFullScreen
+                        loading="lazy"
+                        className="absolute inset-0 size-full border-0"
+                      />
+                    </div>
+                    {f.credito ? (
+                      <figcaption className="mt-2 text-center text-xs text-muted-foreground">
+                        Crédito:{" "}
+                        <a
+                          href={`https://instagram.com/${f.credito}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-medium text-primary hover:underline"
+                        >
+                          @{f.credito}
+                        </a>
+                      </figcaption>
+                    ) : null}
+                  </figure>
+                ) : null}
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h3 className="text-[17px] font-semibold tracking-[-0.015em]">{f.nome}</h3>
+                    {f.link && !embedPanda(f.link) ? (
+                      <a
+                        href={f.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-[12.5px] font-medium hover:border-primary hover:text-primary"
+                      >
+                        <Video className="size-3.5" /> Ver vídeo de referência{" "}
+                        <ExternalLink className="size-3" />
+                      </a>
+                    ) : null}
+                  </div>
+                  <dl className="mt-4 grid gap-3">
+                    {(
+                      [
+                        ["O que é", f.o_que_e],
+                        ["Por que funciona", f.por_que],
+                        ["Como aplicar", f.como_adaptar],
+                      ] as const
+                    ).map(([r, v]) =>
+                      v ? (
+                        <div key={r}>
+                          <dt className="text-xs font-semibold text-muted-foreground">{r}</dt>
+                          <dd className="mt-0.5 whitespace-pre-line text-sm leading-relaxed">
+                            {v}
+                          </dd>
+                        </div>
+                      ) : null,
+                    )}
+                  </dl>
+                  <div className="mt-auto flex flex-wrap items-center gap-1.5 border-t border-border pt-4">
+                    <span className="mr-1 text-[12.5px] text-muted-foreground">
+                      Pra minha loja:
+                    </span>
+                    {DECISOES.map((o) => (
+                      <button
+                        key={o.valor}
+                        onClick={() => decidir(f.id, o.valor)}
+                        aria-pressed={d === o.valor}
+                        className={cn(
+                          "rounded-full border px-3 py-1 text-[12.5px] font-medium transition-colors",
+                          d === o.valor
+                            ? "border-foreground bg-foreground text-surface"
+                            : "border-border bg-surface hover:border-foreground",
+                        )}
+                      >
+                        {o.rotulo}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </article>
             );

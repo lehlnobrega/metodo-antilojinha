@@ -44,7 +44,7 @@ export function AbaFormatos() {
   const formatos = useQuery({
     queryKey: ["acervo", "formatos", false],
     queryFn: async () => {
-      const { data, error } = await supabase.from("formatos_virais").select("id, ordem, nome, o_que_e, por_que, como_adaptar, link, publicado").order("ordem").order("id");
+      const { data, error } = await supabase.from("formatos_virais").select("id, ordem, nome, o_que_e, por_que, como_adaptar, link, credito, publicado").order("ordem").order("id");
       if (error) falha(error);
       return (data ?? []) as FormatoViral[];
     },
@@ -97,7 +97,7 @@ export function AbaFormatos() {
 }
 
 function CardFormato({ formato, onFechar, salvar, salvando }: { formato: Partial<FormatoViral> | null; onFechar: () => void; salvar: (f: Partial<FormatoViral>) => Promise<void>; salvando: boolean }) {
-  const vazio = { nome: "", o_que_e: "", por_que: "", como_adaptar: "", link: "", ordem: "0", publicado: true };
+  const vazio = { nome: "", o_que_e: "", por_que: "", como_adaptar: "", link: "", credito: "", ordem: "0", publicado: true };
   const [f, setF] = useState(vazio);
   const [orig, setOrig] = useState("");
   useEffect(() => {
@@ -108,6 +108,7 @@ function CardFormato({ formato, onFechar, salvar, salvando }: { formato: Partial
       por_que: formato.por_que ?? "",
       como_adaptar: formato.como_adaptar ?? "",
       link: formato.link ?? "",
+      credito: formato.credito ?? "",
       ordem: String(formato.ordem ?? 0),
       publicado: formato.publicado ?? true,
     };
@@ -128,6 +129,7 @@ function CardFormato({ formato, onFechar, salvar, salvando }: { formato: Partial
         por_que: f.por_que.trim() || null,
         como_adaptar: f.como_adaptar.trim() || null,
         link: f.link.trim() || null,
+        credito: f.credito.trim().replace(/^@/, "") || null,
         ordem: Number(f.ordem) || 0,
         publicado: f.publicado,
       });
@@ -151,7 +153,8 @@ function CardFormato({ formato, onFechar, salvar, salvando }: { formato: Partial
         <Rotulo texto="O que é"><textarea value={f.o_que_e} onChange={(e) => setF({ ...f, o_que_e: e.target.value })} className={textareaCls} /></Rotulo>
         <Rotulo texto="Por que viraliza"><textarea value={f.por_que} onChange={(e) => setF({ ...f, por_que: e.target.value })} className={textareaCls} /></Rotulo>
         <Rotulo texto="Como adaptar"><textarea value={f.como_adaptar} onChange={(e) => setF({ ...f, como_adaptar: e.target.value })} className={textareaCls} /></Rotulo>
-        <Rotulo texto="Link do vídeo de referência"><input value={f.link} onChange={(e) => setF({ ...f, link: e.target.value })} placeholder="https://" className={inputCls} /></Rotulo>
+        <Rotulo texto="Vídeo de referência (link do Panda, Instagram ou TikTok)"><input value={f.link} onChange={(e) => setF({ ...f, link: e.target.value })} placeholder="https://" className={inputCls} /></Rotulo>
+        <Rotulo texto="Crédito do vídeo (@ do perfil)"><input value={f.credito} onChange={(e) => setF({ ...f, credito: e.target.value })} placeholder="ex: soluna.mistica" className={inputCls} /></Rotulo>
         <div className="grid gap-3 sm:grid-cols-2">
           <Rotulo texto="Ordem"><input value={f.ordem} onChange={(e) => setF({ ...f, ordem: e.target.value.replace(/\D/g, "") })} inputMode="numeric" className={inputCls} /></Rotulo>
           <label className="flex items-center gap-3 self-end pb-2 text-sm"><Interruptor ligado={f.publicado} onChange={(v) => setF({ ...f, publicado: v })} rotulo="Publicado" /> Publicado</label>

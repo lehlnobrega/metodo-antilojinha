@@ -78,8 +78,20 @@ export type FormatoViral = {
   por_que: string | null;
   como_adaptar: string | null;
   link: string | null;
+  /** @ do perfil dono do vídeo de referência */
+  credito: string | null;
   publicado: boolean;
 };
+
+/** Link de vídeo do Panda vira o player embutido; aceita o link de embed ou só o id do vídeo. */
+export const PANDA_PLAYER = "https://player-vz-30e1d25c-f58.tv.pandavideo.com.br/embed/?v=";
+export function embedPanda(link: string | null): string | null {
+  if (!link) return null;
+  const l = link.trim();
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(l)) return PANDA_PLAYER + l;
+  if (/pandavideo\.com/i.test(l)) return l;
+  return null;
+}
 export type Decisao = "sim" | "adaptar" | "nao";
 
 export const DECISOES: { valor: Decisao; rotulo: string }[] = [
@@ -93,7 +105,7 @@ export function useFormatosVirais(apenasPublicados = true) {
   return useQuery({
     queryKey: ["acervo", "formatos", apenasPublicados],
     queryFn: async () => {
-      let q = supabase.from("formatos_virais").select("id, ordem, nome, o_que_e, por_que, como_adaptar, link, publicado").order("ordem").order("id");
+      let q = supabase.from("formatos_virais").select("id, ordem, nome, o_que_e, por_que, como_adaptar, link, credito, publicado").order("ordem").order("id");
       if (apenasPublicados) q = q.eq("publicado", true);
       const { data, error } = await q;
       if (error) falha(error);
