@@ -64,7 +64,7 @@ function PrimeiroAcesso() {
             setEnviando(true);
             try {
               const r = await criar({ data: { email: email.trim().toLowerCase(), senha } });
-              if (r.situacao === "erro") toast.error("Não consegui criar a sua senha agora. Tenta de novo em alguns minutos.");
+              if (r.situacao === "erro") toast.error(r.motivo ?? "Não consegui criar a sua senha agora. Tenta de novo em alguns minutos.");
               else setPopup(r.situacao);
             } catch {
               toast.error("Não consegui criar a sua senha agora. Tenta de novo em alguns minutos.");

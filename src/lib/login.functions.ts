@@ -8,7 +8,7 @@ export const verificarCadastro = createServerFn({ method: "POST" })
     try {
       const { criarSupabaseAdmin } = await import("@/integrations/metodo/admin.server");
       const admin = criarSupabaseAdmin();
-      const { data: aluna } = await admin.from("alunas").select("id").ilike("email", data.email).maybeSingle();
+      const { data: aluna } = await admin.from("alunas").select("id").eq("email", data.email).maybeSingle();
       return { existe: Boolean(aluna) };
     } catch {
       // Se não der pra conferir, trata como senha errada (nunca bloqueia quem é aluna).

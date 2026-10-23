@@ -13,12 +13,21 @@ export const criarSenhaPrimeiroAcesso = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }): Promise<{ situacao: SituacaoPrimeiroAcesso }> => {
+  .handler(async ({ data }): Promise<{ situacao: SituacaoPrimeiroAcesso; motivo?: string }> => {
+    // Explica pra aluna o que deu errado e deixa o detalhe no log da Easypanel
+    const falhou = (etapa: string, msg: string) => {
+      console.error(`[primeiro-acesso] ${etapa} (${data.email}): ${msg}`);
+      if (/password|senha|weak/i.test(msg)) {
+        return { situacao: "erro" as const, motivo: "Essa senha não foi aceita. Tenta uma senha mais forte, com letras maiúsculas, minúsculas e números." };
+      }
+      return { situacao: "erro" as const, motivo: `Não consegui criar a sua senha agora (${etapa}). Me chama no Grupo VIP que eu resolvo.` };
+    };
     try {
       const { criarSupabaseAdmin } = await import("@/integrations/metodo/admin.server");
       const admin = criarSupabaseAdmin();
 
-      const { data: aluna } = await admin.from("alunas").select("id").ilike("email", data.email).maybeSingle();
+      const { data: aluna, error: e0 } = await admin.from("alunas").select("id").eq("email", data.email).maybeSingle();
+      if (e0) return falhou("busca do cadastro", e0.message);
       if (!aluna) return { situacao: "sem_acesso" };
 
       const { data: u } = await admin.auth.admin.getUserById(aluna.id);
@@ -31,7 +40,7 @@ export const criarSenhaPrimeiroAcesso = createServerFn({ method: "POST" })
           email_confirm: true,
           user_metadata: { senha_criada: true },
         });
-        if (e1) return { situacao: /already|registered|exists/i.test(e1.message) ? "ja_criou" : "erro" };
+        if (e1) return /already|registered|exists/i.test(e1.message) ? { situacao: "ja_criou" } : falhou("criação do login", e1.message);
         return { situacao: "criada" };
       }
 
@@ -45,9 +54,9 @@ export const criarSenhaPrimeiroAcesso = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { ...meta, senha_criada: true },
       });
-      if (e2) return { situacao: "erro" };
+      if (e2) return falhou("troca da senha", e2.message);
       return { situacao: "criada" };
-    } catch {
-      return { situacao: "erro" };
+    } catch (e) {
+      return falhou("servidor", (e as Error).message);
     }
   });
