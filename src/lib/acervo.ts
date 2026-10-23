@@ -124,3 +124,22 @@ export async function salvarDecisao(alunaId: string, formatoId: number, decisao:
     .upsert({ aluna_id: alunaId, formato_id: formatoId, decisao, updated_at: new Date().toISOString() }, { onConflict: "aluna_id,formato_id" });
   if (error) falha(error);
 }
+
+// ===== Ideias salvas (coraçãozinho) =====
+export function useIdeiasSalvas() {
+  return useQuery({
+    queryKey: ["acervo", "salvas"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("ideias_salvas").select("conteudo_id");
+      if (error) falha(error);
+      return new Set(((data ?? []) as { conteudo_id: number }[]).map((r) => r.conteudo_id));
+    },
+  });
+}
+
+export async function salvarIdeia(alunaId: string, conteudoId: number, salvar: boolean) {
+  const { error } = salvar
+    ? await supabase.from("ideias_salvas").upsert({ aluna_id: alunaId, conteudo_id: conteudoId }, { onConflict: "aluna_id,conteudo_id" })
+    : await supabase.from("ideias_salvas").delete().eq("aluna_id", alunaId).eq("conteudo_id", conteudoId);
+  if (error) throw new Error(error.message);
+}
