@@ -42,7 +42,7 @@ function CriarSenha() {
             toast.error("As duas senhas precisam ser iguais.");
             return;
           }
-          const { error } = await supabase.auth.updateUser({ password: senha });
+          const { error } = await supabase.auth.updateUser({ password: senha, data: { senha_criada: true } });
           if (error) {
             toast.error("O link expirou ou já foi usado. Peça um novo em Esqueci minha senha.");
             return;

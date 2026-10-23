@@ -6,4 +6,4 @@ export const FUSO = "America/Sao_Paulo";
 export const META_FATURAMENTO = 10000;
 
 /** Página de vendas do método, pra quem tenta entrar sem ser aluna. */
-export const PAGINA_VENDAS_URL = "https://lnobrega.com/metodo-loja-online/";
+export const PAGINA_VENDAS_URL = "https://lnobrega.com/metodo-loja-online-lucrativa";

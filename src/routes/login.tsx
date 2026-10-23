@@ -43,9 +43,17 @@ function Login() {
       titulo="Que bom te ver de novo"
       texto="Entra com o e-mail que você usou na compra."
       rodape={
-        <Link to="/esqueci-senha" className="transicao-suave font-medium text-primary hover:underline">
-          Esqueci minha senha
-        </Link>
+        <div className="flex flex-col items-center gap-2.5">
+          <Link to="/esqueci-senha" className="transicao-suave font-medium text-primary hover:underline">
+            Esqueci minha senha
+          </Link>
+          <span>
+            Primeira vez aqui?{" "}
+            <Link to="/primeiro-acesso" className="transicao-suave font-medium text-primary hover:underline">
+              Crie a sua senha
+            </Link>
+          </span>
+        </div>
       }
     >
       <form

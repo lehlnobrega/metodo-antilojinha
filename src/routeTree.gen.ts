@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MaisRouteImport } from './routes/mais'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as PlanoDeNegociosRouteImport } from './routes/plano-de-negocios'
+import { Route as PrimeiroAcessoRouteImport } from './routes/primeiro-acesso'
 import { Route as BonusBonusIdRouteImport } from './routes/bonus.$bonusId'
 import { Route as ConteudosIndexRouteImport } from './routes/conteudos.index'
 import { Route as FerramentasIndexRouteImport } from './routes/ferramentas.index'
@@ -81,6 +82,11 @@ const PesquisaRoute = PesquisaRouteImport.update({
 const PlanoDeNegociosRoute = PlanoDeNegociosRouteImport.update({
   id: '/plano-de-negocios',
   path: '/plano-de-negocios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrimeiroAcessoRoute = PrimeiroAcessoRouteImport.update({
+  id: '/primeiro-acesso',
+  path: '/primeiro-acesso',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BonusBonusIdRoute = BonusBonusIdRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/mais': typeof MaisRoute
   '/pesquisa': typeof PesquisaRoute
   '/plano-de-negocios': typeof PlanoDeNegociosRoute
+  '/primeiro-acesso': typeof PrimeiroAcessoRoute
   '/bonus/$bonusId': typeof BonusBonusIdRoute
   '/ferramentas/analisador': typeof FerramentasAnalisadorRoute
   '/ferramentas/ia': typeof FerramentasIaRoute
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/mais': typeof MaisRoute
   '/pesquisa': typeof PesquisaRoute
   '/plano-de-negocios': typeof PlanoDeNegociosRoute
+  '/primeiro-acesso': typeof PrimeiroAcessoRoute
   '/bonus/$bonusId': typeof BonusBonusIdRoute
   '/ferramentas/analisador': typeof FerramentasAnalisadorRoute
   '/ferramentas/ia': typeof FerramentasIaRoute
@@ -214,6 +222,7 @@ export interface FileRoutesById {
   '/mais': typeof MaisRoute
   '/pesquisa': typeof PesquisaRoute
   '/plano-de-negocios': typeof PlanoDeNegociosRoute
+  '/primeiro-acesso': typeof PrimeiroAcessoRoute
   '/bonus/$bonusId': typeof BonusBonusIdRoute
   '/ferramentas/analisador': typeof FerramentasAnalisadorRoute
   '/ferramentas/ia': typeof FerramentasIaRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/mais'
     | '/pesquisa'
     | '/plano-de-negocios'
+    | '/primeiro-acesso'
     | '/bonus/$bonusId'
     | '/ferramentas/analisador'
     | '/ferramentas/ia'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/mais'
     | '/pesquisa'
     | '/plano-de-negocios'
+    | '/primeiro-acesso'
     | '/bonus/$bonusId'
     | '/ferramentas/analisador'
     | '/ferramentas/ia'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/mais'
     | '/pesquisa'
     | '/plano-de-negocios'
+    | '/primeiro-acesso'
     | '/bonus/$bonusId'
     | '/ferramentas/analisador'
     | '/ferramentas/ia'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   MaisRoute: typeof MaisRoute
   PesquisaRoute: typeof PesquisaRoute
   PlanoDeNegociosRoute: typeof PlanoDeNegociosRoute
+  PrimeiroAcessoRoute: typeof PrimeiroAcessoRoute
   BonusBonusIdRoute: typeof BonusBonusIdRoute
   FerramentasAnalisadorRoute: typeof FerramentasAnalisadorRoute
   FerramentasIaRoute: typeof FerramentasIaRoute
@@ -402,6 +415,13 @@ declare module '@tanstack/react-router' {
       path: '/plano-de-negocios'
       fullPath: '/plano-de-negocios'
       preLoaderRoute: typeof PlanoDeNegociosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/primeiro-acesso': {
+      id: '/primeiro-acesso'
+      path: '/primeiro-acesso'
+      fullPath: '/primeiro-acesso'
+      preLoaderRoute: typeof PrimeiroAcessoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bonus/$bonusId': {
@@ -509,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   MaisRoute: MaisRoute,
   PesquisaRoute: PesquisaRoute,
   PlanoDeNegociosRoute: PlanoDeNegociosRoute,
+  PrimeiroAcessoRoute: PrimeiroAcessoRoute,
   BonusBonusIdRoute: BonusBonusIdRoute,
   FerramentasAnalisadorRoute: FerramentasAnalisadorRoute,
   FerramentasIaRoute: FerramentasIaRoute,
