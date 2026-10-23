@@ -1,4 +1,5 @@
 // Abas novas do admin: formatos virais e bônus (com os itens de cada bônus).
+import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -7,7 +8,7 @@ import { toast } from "sonner";
 import { BotaoPrimario, BotaoSecundario, CardOverlay, Interruptor, Rotulo, SelectMetodo, inputCls, textareaCls } from "@/components/metodo/overlay";
 import { supabase } from "@/integrations/metodo/client";
 import type { FormatoViral } from "@/lib/acervo";
-import { type Bonus, type ItemBonus, ROTULO_STATUS_BONUS, type StatusBonus } from "@/lib/bonus";
+import { type Bonus, type ItemBonus, ROTULO_STATUS_BONUS, ROTULO_TIPO_BONUS, type StatusBonus, type TipoBonus } from "@/lib/bonus";
 import { cn, semVazios } from "@/lib/utils";
 
 function falha(e: unknown): never {
@@ -174,7 +175,7 @@ export function AbaBonus() {
   const bonus = useQuery({
     queryKey: ["bonus"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bonus").select("id, ordem, titulo, descricao, status").order("ordem").order("id");
+      const { data, error } = await supabase.from("bonus").select("*").order("ordem").order("id");
       if (error) falha(error);
       return (data ?? []) as Bonus[];
     },
@@ -235,21 +236,35 @@ export function AbaBonus() {
         {(bonus.data ?? []).map((b) => {
           const doBonus = (itens.data ?? []).filter((i) => i.bonus_id === b.id);
           const exp = aberto === b.id;
+          const ehPaginas = b.tipo === "paginas";
           return (
             <div key={b.id} className="card-metodo">
               <div className="flex flex-wrap items-center gap-3 p-4">
                 <button onClick={() => setAberto(exp ? null : b.id)} className="min-w-0 flex-1 text-left">
                   <p className="font-semibold">{b.titulo}</p>
-                  <p className="text-xs text-muted-foreground">{doBonus.length} {doBonus.length === 1 ? "item" : "itens"}{b.descricao ? `, ${b.descricao}` : ""}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {ehPaginas ? "Páginas estilo Notion" : `${doBonus.length} ${doBonus.length === 1 ? "item" : "itens"}`}
+                    {b.descricao ? `, ${b.descricao}` : ""}
+                  </p>
                 </button>
                 <Situacao ok={b.status === "liberado"} texto={ROTULO_STATUS_BONUS[b.status]} />
-                <button onClick={() => setAberto(exp ? null : b.id)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:border-primary hover:text-primary">
-                  {exp ? "Fechar itens" : "Ver itens"}
-                </button>
+                {ehPaginas ? (
+                  <Link
+                    to="/admin/bonus/$bonusId"
+                    params={{ bonusId: String(b.id) }}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:border-primary hover:text-primary"
+                  >
+                    Editar páginas
+                  </Link>
+                ) : (
+                  <button onClick={() => setAberto(exp ? null : b.id)} className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:border-primary hover:text-primary">
+                    {exp ? "Fechar itens" : "Ver itens"}
+                  </button>
+                )}
                 <button onClick={() => setEditBonus(b)} aria-label="Editar bônus" className="rounded-lg p-2 text-muted-foreground hover:text-primary"><Pencil className="size-4" /></button>
                 <Excluir rotulo={b.titulo} onConfirmar={() => excluirBonus.mutate(b.id, { onError: (e) => toast.error(e.message), onSuccess: () => toast.success("Bônus excluído") })} />
               </div>
-              {exp ? (
+              {exp && !ehPaginas ? (
                 <div className="border-t border-border p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-sm font-medium">Itens de {b.titulo}</p>
@@ -284,11 +299,11 @@ export function AbaBonus() {
 }
 
 function CardBonus({ bonus, onFechar, salvar, salvando }: { bonus: Partial<Bonus> | null; onFechar: () => void; salvar: (b: Partial<Bonus>) => Promise<void>; salvando: boolean }) {
-  const [f, setF] = useState({ titulo: "", descricao: "", status: "em_breve" as StatusBonus, ordem: "0" });
+  const [f, setF] = useState({ titulo: "", descricao: "", status: "em_breve" as StatusBonus, tipo: "itens" as TipoBonus, ordem: "0" });
   const [orig, setOrig] = useState("");
   useEffect(() => {
     if (!bonus) return;
-    const v = { titulo: bonus.titulo ?? "", descricao: bonus.descricao ?? "", status: bonus.status ?? ("em_breve" as StatusBonus), ordem: String(bonus.ordem ?? 0) };
+    const v = { titulo: bonus.titulo ?? "", descricao: bonus.descricao ?? "", status: bonus.status ?? ("em_breve" as StatusBonus), tipo: bonus.tipo ?? ("itens" as TipoBonus), ordem: String(bonus.ordem ?? 0) };
     setF(v);
     setOrig(JSON.stringify(v));
   }, [bonus]);
@@ -299,7 +314,7 @@ function CardBonus({ bonus, onFechar, salvar, salvando }: { bonus: Partial<Bonus
       return;
     }
     try {
-      await salvar({ ...(bonus?.id ? { id: bonus.id } : {}), titulo: f.titulo.trim(), descricao: f.descricao.trim() || null, status: f.status, ordem: Number(f.ordem) || 0 });
+      await salvar({ ...(bonus?.id ? { id: bonus.id } : {}), titulo: f.titulo.trim(), descricao: f.descricao.trim() || null, status: f.status, tipo: f.tipo, ordem: Number(f.ordem) || 0 });
       toast.success("Bônus salvo");
       onFechar();
     } catch (err) {
@@ -318,6 +333,13 @@ function CardBonus({ bonus, onFechar, salvar, salvando }: { bonus: Partial<Bonus
       <form id="form-bonus" onSubmit={enviar} className="space-y-4">
         <Rotulo texto="Nome do bônus" obrigatorio><input value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} placeholder="ex: Skills" className={inputCls} /></Rotulo>
         <Rotulo texto="Descrição curta"><textarea value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} className={textareaCls} /></Rotulo>
+        <Rotulo texto="Formato do bônus">
+          <SelectMetodo
+            valor={f.tipo}
+            onChange={(v) => setF({ ...f, tipo: v as TipoBonus })}
+            opcoes={(Object.keys(ROTULO_TIPO_BONUS) as TipoBonus[]).map((k) => ({ valor: k, rotulo: ROTULO_TIPO_BONUS[k] }))}
+          />
+        </Rotulo>
         <div className="grid gap-3 sm:grid-cols-2">
           <Rotulo texto="Situação">
             <SelectMetodo

@@ -4,7 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/metodo/client";
 
 export type StatusBonus = "liberado" | "em_breve" | "escondido";
-export type Bonus = { id: number; ordem: number; titulo: string; descricao: string | null; status: StatusBonus };
+export type TipoBonus = "itens" | "paginas";
+export type Bonus = { id: number; ordem: number; titulo: string; descricao: string | null; status: StatusBonus; tipo: TipoBonus };
+export const ROTULO_TIPO_BONUS: Record<TipoBonus, string> = {
+  itens: "Itens com link (ex: skills, apps)",
+  paginas: "Páginas estilo Notion",
+};
 export type ItemBonus = {
   id: number;
   bonus_id: number;
@@ -29,7 +34,7 @@ export function useBonus() {
   return useQuery({
     queryKey: ["bonus"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("bonus").select("id, ordem, titulo, descricao, status").order("ordem").order("id");
+      const { data, error } = await supabase.from("bonus").select("*").order("ordem").order("id");
       if (error) falha(error);
       return (data ?? []) as Bonus[];
     },

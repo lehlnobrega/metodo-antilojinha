@@ -20,14 +20,16 @@ import { Route as MaisRouteImport } from './routes/mais'
 import { Route as PesquisaRouteImport } from './routes/pesquisa'
 import { Route as PlanoDeNegociosRouteImport } from './routes/plano-de-negocios'
 import { Route as PrimeiroAcessoRouteImport } from './routes/primeiro-acesso'
-import { Route as BonusBonusIdRouteImport } from './routes/bonus.$bonusId'
 import { Route as ConteudosIndexRouteImport } from './routes/conteudos.index'
 import { Route as FerramentasIndexRouteImport } from './routes/ferramentas.index'
 import { Route as FerramentasAnalisadorRouteImport } from './routes/ferramentas.analisador'
 import { Route as FerramentasIaRouteImport } from './routes/ferramentas.ia'
 import { Route as MateriaisIndexRouteImport } from './routes/materiais.index'
 import { Route as PlanoPraticoIndexRouteImport } from './routes/plano-pratico.index'
+import { Route as AdminBonusBonusIdRouteImport } from './routes/admin_.bonus.$bonusId'
 import { Route as AdminMateriaisMaterialIdRouteImport } from './routes/admin_.materiais.$materialId'
+import { Route as BonusBonusIdIndexRouteImport } from './routes/bonus.$bonusId.index'
+import { Route as BonusBonusIdPaginaIdRouteImport } from './routes/bonus.$bonusId.$paginaId'
 import { Route as ConteudosIdeiasIndexRouteImport } from './routes/conteudos.ideias.index'
 import { Route as ConteudosIdeiasNichoIdRouteImport } from './routes/conteudos.ideias.$nichoId'
 import { Route as MateriaisSlugIndexRouteImport } from './routes/materiais.$slug.index'
@@ -89,11 +91,6 @@ const PrimeiroAcessoRoute = PrimeiroAcessoRouteImport.update({
   path: '/primeiro-acesso',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BonusBonusIdRoute = BonusBonusIdRouteImport.update({
-  id: '/bonus/$bonusId',
-  path: '/bonus/$bonusId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ConteudosIndexRoute = ConteudosIndexRouteImport.update({
   id: '/conteudos/',
   path: '/conteudos/',
@@ -124,12 +121,27 @@ const PlanoPraticoIndexRoute = PlanoPraticoIndexRouteImport.update({
   path: '/plano-pratico/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBonusBonusIdRoute = AdminBonusBonusIdRouteImport.update({
+  id: '/admin_/bonus/$bonusId',
+  path: '/admin/bonus/$bonusId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminMateriaisMaterialIdRoute =
   AdminMateriaisMaterialIdRouteImport.update({
     id: '/admin_/materiais/$materialId',
     path: '/admin/materiais/$materialId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const BonusBonusIdIndexRoute = BonusBonusIdIndexRouteImport.update({
+  id: '/bonus/$bonusId/',
+  path: '/bonus/$bonusId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BonusBonusIdPaginaIdRoute = BonusBonusIdPaginaIdRouteImport.update({
+  id: '/bonus/$bonusId/$paginaId',
+  path: '/bonus/$bonusId/$paginaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConteudosIdeiasIndexRoute = ConteudosIdeiasIndexRouteImport.update({
   id: '/conteudos/ideias/',
   path: '/conteudos/ideias/',
@@ -170,15 +182,17 @@ export interface FileRoutesByFullPath {
   '/pesquisa': typeof PesquisaRoute
   '/plano-de-negocios': typeof PlanoDeNegociosRoute
   '/primeiro-acesso': typeof PrimeiroAcessoRoute
-  '/bonus/$bonusId': typeof BonusBonusIdRoute
   '/ferramentas/analisador': typeof FerramentasAnalisadorRoute
   '/ferramentas/ia': typeof FerramentasIaRoute
   '/conteudos/': typeof ConteudosIndexRoute
   '/ferramentas/': typeof FerramentasIndexRoute
   '/materiais/': typeof MateriaisIndexRoute
   '/plano-pratico/': typeof PlanoPraticoIndexRoute
+  '/admin/bonus/$bonusId': typeof AdminBonusBonusIdRoute
   '/admin/materiais/$materialId': typeof AdminMateriaisMaterialIdRoute
+  '/bonus/$bonusId/$paginaId': typeof BonusBonusIdPaginaIdRoute
   '/conteudos/ideias/$nichoId': typeof ConteudosIdeiasNichoIdRoute
+  '/bonus/$bonusId/': typeof BonusBonusIdIndexRoute
   '/conteudos/ideias/': typeof ConteudosIdeiasIndexRoute
   '/materiais/$slug/': typeof MateriaisSlugIndexRoute
   '/materiais/$slug/$materialId/$paginaId': typeof MateriaisSlugMaterialIdPaginaIdRoute
@@ -196,15 +210,17 @@ export interface FileRoutesByTo {
   '/pesquisa': typeof PesquisaRoute
   '/plano-de-negocios': typeof PlanoDeNegociosRoute
   '/primeiro-acesso': typeof PrimeiroAcessoRoute
-  '/bonus/$bonusId': typeof BonusBonusIdRoute
   '/ferramentas/analisador': typeof FerramentasAnalisadorRoute
   '/ferramentas/ia': typeof FerramentasIaRoute
   '/conteudos': typeof ConteudosIndexRoute
   '/ferramentas': typeof FerramentasIndexRoute
   '/materiais': typeof MateriaisIndexRoute
   '/plano-pratico': typeof PlanoPraticoIndexRoute
+  '/admin/bonus/$bonusId': typeof AdminBonusBonusIdRoute
   '/admin/materiais/$materialId': typeof AdminMateriaisMaterialIdRoute
+  '/bonus/$bonusId/$paginaId': typeof BonusBonusIdPaginaIdRoute
   '/conteudos/ideias/$nichoId': typeof ConteudosIdeiasNichoIdRoute
+  '/bonus/$bonusId': typeof BonusBonusIdIndexRoute
   '/conteudos/ideias': typeof ConteudosIdeiasIndexRoute
   '/materiais/$slug': typeof MateriaisSlugIndexRoute
   '/materiais/$slug/$materialId/$paginaId': typeof MateriaisSlugMaterialIdPaginaIdRoute
@@ -223,15 +239,17 @@ export interface FileRoutesById {
   '/pesquisa': typeof PesquisaRoute
   '/plano-de-negocios': typeof PlanoDeNegociosRoute
   '/primeiro-acesso': typeof PrimeiroAcessoRoute
-  '/bonus/$bonusId': typeof BonusBonusIdRoute
   '/ferramentas/analisador': typeof FerramentasAnalisadorRoute
   '/ferramentas/ia': typeof FerramentasIaRoute
   '/conteudos/': typeof ConteudosIndexRoute
   '/ferramentas/': typeof FerramentasIndexRoute
   '/materiais/': typeof MateriaisIndexRoute
   '/plano-pratico/': typeof PlanoPraticoIndexRoute
+  '/admin_/bonus/$bonusId': typeof AdminBonusBonusIdRoute
   '/admin_/materiais/$materialId': typeof AdminMateriaisMaterialIdRoute
+  '/bonus/$bonusId/$paginaId': typeof BonusBonusIdPaginaIdRoute
   '/conteudos/ideias/$nichoId': typeof ConteudosIdeiasNichoIdRoute
+  '/bonus/$bonusId/': typeof BonusBonusIdIndexRoute
   '/conteudos/ideias/': typeof ConteudosIdeiasIndexRoute
   '/materiais/$slug/': typeof MateriaisSlugIndexRoute
   '/materiais/$slug/$materialId/$paginaId': typeof MateriaisSlugMaterialIdPaginaIdRoute
@@ -251,15 +269,17 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/plano-de-negocios'
     | '/primeiro-acesso'
-    | '/bonus/$bonusId'
     | '/ferramentas/analisador'
     | '/ferramentas/ia'
     | '/conteudos/'
     | '/ferramentas/'
     | '/materiais/'
     | '/plano-pratico/'
+    | '/admin/bonus/$bonusId'
     | '/admin/materiais/$materialId'
+    | '/bonus/$bonusId/$paginaId'
     | '/conteudos/ideias/$nichoId'
+    | '/bonus/$bonusId/'
     | '/conteudos/ideias/'
     | '/materiais/$slug/'
     | '/materiais/$slug/$materialId/$paginaId'
@@ -277,15 +297,17 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/plano-de-negocios'
     | '/primeiro-acesso'
-    | '/bonus/$bonusId'
     | '/ferramentas/analisador'
     | '/ferramentas/ia'
     | '/conteudos'
     | '/ferramentas'
     | '/materiais'
     | '/plano-pratico'
+    | '/admin/bonus/$bonusId'
     | '/admin/materiais/$materialId'
+    | '/bonus/$bonusId/$paginaId'
     | '/conteudos/ideias/$nichoId'
+    | '/bonus/$bonusId'
     | '/conteudos/ideias'
     | '/materiais/$slug'
     | '/materiais/$slug/$materialId/$paginaId'
@@ -303,15 +325,17 @@ export interface FileRouteTypes {
     | '/pesquisa'
     | '/plano-de-negocios'
     | '/primeiro-acesso'
-    | '/bonus/$bonusId'
     | '/ferramentas/analisador'
     | '/ferramentas/ia'
     | '/conteudos/'
     | '/ferramentas/'
     | '/materiais/'
     | '/plano-pratico/'
+    | '/admin_/bonus/$bonusId'
     | '/admin_/materiais/$materialId'
+    | '/bonus/$bonusId/$paginaId'
     | '/conteudos/ideias/$nichoId'
+    | '/bonus/$bonusId/'
     | '/conteudos/ideias/'
     | '/materiais/$slug/'
     | '/materiais/$slug/$materialId/$paginaId'
@@ -330,15 +354,17 @@ export interface RootRouteChildren {
   PesquisaRoute: typeof PesquisaRoute
   PlanoDeNegociosRoute: typeof PlanoDeNegociosRoute
   PrimeiroAcessoRoute: typeof PrimeiroAcessoRoute
-  BonusBonusIdRoute: typeof BonusBonusIdRoute
   FerramentasAnalisadorRoute: typeof FerramentasAnalisadorRoute
   FerramentasIaRoute: typeof FerramentasIaRoute
   ConteudosIndexRoute: typeof ConteudosIndexRoute
   FerramentasIndexRoute: typeof FerramentasIndexRoute
   MateriaisIndexRoute: typeof MateriaisIndexRoute
   PlanoPraticoIndexRoute: typeof PlanoPraticoIndexRoute
+  AdminBonusBonusIdRoute: typeof AdminBonusBonusIdRoute
   AdminMateriaisMaterialIdRoute: typeof AdminMateriaisMaterialIdRoute
+  BonusBonusIdPaginaIdRoute: typeof BonusBonusIdPaginaIdRoute
   ConteudosIdeiasNichoIdRoute: typeof ConteudosIdeiasNichoIdRoute
+  BonusBonusIdIndexRoute: typeof BonusBonusIdIndexRoute
   ConteudosIdeiasIndexRoute: typeof ConteudosIdeiasIndexRoute
   MateriaisSlugIndexRoute: typeof MateriaisSlugIndexRoute
   MateriaisSlugMaterialIdPaginaIdRoute: typeof MateriaisSlugMaterialIdPaginaIdRoute
@@ -424,13 +450,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrimeiroAcessoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/bonus/$bonusId': {
-      id: '/bonus/$bonusId'
-      path: '/bonus/$bonusId'
-      fullPath: '/bonus/$bonusId'
-      preLoaderRoute: typeof BonusBonusIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/conteudos/': {
       id: '/conteudos/'
       path: '/conteudos'
@@ -473,11 +492,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlanoPraticoIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/bonus/$bonusId': {
+      id: '/admin_/bonus/$bonusId'
+      path: '/admin/bonus/$bonusId'
+      fullPath: '/admin/bonus/$bonusId'
+      preLoaderRoute: typeof AdminBonusBonusIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/materiais/$materialId': {
       id: '/admin_/materiais/$materialId'
       path: '/admin/materiais/$materialId'
       fullPath: '/admin/materiais/$materialId'
       preLoaderRoute: typeof AdminMateriaisMaterialIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bonus/$bonusId/': {
+      id: '/bonus/$bonusId/'
+      path: '/bonus/$bonusId'
+      fullPath: '/bonus/$bonusId/'
+      preLoaderRoute: typeof BonusBonusIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bonus/$bonusId/$paginaId': {
+      id: '/bonus/$bonusId/$paginaId'
+      path: '/bonus/$bonusId/$paginaId'
+      fullPath: '/bonus/$bonusId/$paginaId'
+      preLoaderRoute: typeof BonusBonusIdPaginaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conteudos/ideias/': {
@@ -530,15 +570,17 @@ const rootRouteChildren: RootRouteChildren = {
   PesquisaRoute: PesquisaRoute,
   PlanoDeNegociosRoute: PlanoDeNegociosRoute,
   PrimeiroAcessoRoute: PrimeiroAcessoRoute,
-  BonusBonusIdRoute: BonusBonusIdRoute,
   FerramentasAnalisadorRoute: FerramentasAnalisadorRoute,
   FerramentasIaRoute: FerramentasIaRoute,
   ConteudosIndexRoute: ConteudosIndexRoute,
   FerramentasIndexRoute: FerramentasIndexRoute,
   MateriaisIndexRoute: MateriaisIndexRoute,
   PlanoPraticoIndexRoute: PlanoPraticoIndexRoute,
+  AdminBonusBonusIdRoute: AdminBonusBonusIdRoute,
   AdminMateriaisMaterialIdRoute: AdminMateriaisMaterialIdRoute,
+  BonusBonusIdPaginaIdRoute: BonusBonusIdPaginaIdRoute,
   ConteudosIdeiasNichoIdRoute: ConteudosIdeiasNichoIdRoute,
+  BonusBonusIdIndexRoute: BonusBonusIdIndexRoute,
   ConteudosIdeiasIndexRoute: ConteudosIdeiasIndexRoute,
   MateriaisSlugIndexRoute: MateriaisSlugIndexRoute,
   MateriaisSlugMaterialIdPaginaIdRoute: MateriaisSlugMaterialIdPaginaIdRoute,

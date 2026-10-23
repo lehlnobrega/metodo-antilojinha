@@ -32,6 +32,11 @@ export type PaginaMaterial = {
   updated_at: string | null;
 };
 
+/** De onde vêm as páginas: dos materiais de apoio ou de um bônus. */
+export type FontePaginas = { tabela: "paginas_material" | "bonus_paginas"; coluna: "material_id" | "bonus_id" };
+export const FONTE_MATERIAL: FontePaginas = { tabela: "paginas_material", coluna: "material_id" };
+export const FONTE_BONUS: FontePaginas = { tabela: "bonus_paginas", coluna: "bonus_id" };
+
 export const TIPOS_MATERIAL: Record<TipoMaterial, string> = {
   paginas: "Páginas",
   link: "Link",
@@ -78,16 +83,16 @@ export function useContagemPaginas() {
   });
 }
 
-export function usePaginasMaterial(materialId: number | null) {
+export function usePaginasMaterial(materialId: number | null, fonte: FontePaginas = FONTE_MATERIAL) {
   const { sessao } = useAluna();
   return useQuery({
-    queryKey: ["paginas", materialId, sessao?.user.id],
+    queryKey: ["paginas", fonte.tabela, materialId, sessao?.user.id],
     enabled: Boolean(sessao) && materialId != null,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("paginas_material")
+        .from(fonte.tabela)
         .select("*")
-        .eq("material_id", materialId!)
+        .eq(fonte.coluna, materialId!)
         .order("ordem");
       if (error) falhou(error);
       return (data ?? []) as PaginaMaterial[];
@@ -133,23 +138,23 @@ export function useExcluirMaterial() {
   });
 }
 
-export async function reordenar(tabela: "materiais" | "paginas_material", ids: number[]) {
+export async function reordenar(tabela: "materiais" | "paginas_material" | "bonus_paginas", ids: number[]) {
   const res = await Promise.all(ids.map((id, i) => supabase.from(tabela).update({ ordem: i + 1 }).eq("id", id)));
   const erro = res.find((r) => r.error)?.error;
   if (erro) falhou(erro);
 }
 
-export function useMutacaoPaginas(materialId: number) {
+export function useMutacaoPaginas(materialId: number, fonte: FontePaginas = FONTE_MATERIAL) {
   const qc = useQueryClient();
   const invalidar = () => {
-    qc.invalidateQueries({ queryKey: ["paginas", materialId] });
+    qc.invalidateQueries({ queryKey: ["paginas", fonte.tabela, materialId] });
     qc.invalidateQueries({ queryKey: ["paginas-contagem"] });
   };
   const criar = useMutation({
     mutationFn: async (p: Partial<PaginaMaterial>) => {
       const { data, error } = await supabase
-        .from("paginas_material")
-        .insert(semVazios({ material_id: materialId, ...p }))
+        .from(fonte.tabela)
+        .insert(semVazios({ ...p, material_id: undefined, [fonte.coluna]: materialId }))
         .select("*")
         .single();
       if (error) falhou(error);
@@ -160,7 +165,7 @@ export function useMutacaoPaginas(materialId: number) {
   const alterar = useMutation({
     mutationFn: async ({ id, ...p }: Partial<PaginaMaterial> & { id: number }) => {
       const { error } = await supabase
-        .from("paginas_material")
+        .from(fonte.tabela)
         .update({ ...p, updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) falhou(error);
@@ -168,7 +173,7 @@ export function useMutacaoPaginas(materialId: number) {
   });
   const excluir = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("paginas_material").delete().eq("id", id);
+      const { error } = await supabase.from(fonte.tabela).delete().eq("id", id);
       if (error) falhou(error);
     },
     onSettled: invalidar,
