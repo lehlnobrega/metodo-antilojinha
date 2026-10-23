@@ -128,7 +128,7 @@ function CardFormato({ formato, onFechar, salvar, salvando }: { formato: Partial
         o_que_e: f.o_que_e.trim() || null,
         por_que: f.por_que.trim() || null,
         como_adaptar: f.como_adaptar.trim() || null,
-        link: f.link.trim() || null,
+        link: (f.link.match(/src=["']([^"']+)["']/i)?.[1] ?? f.link).trim() || null,
         credito: f.credito.trim().replace(/^@/, "") || null,
         ordem: Number(f.ordem) || 0,
         publicado: f.publicado,

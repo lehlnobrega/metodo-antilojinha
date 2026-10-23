@@ -87,7 +87,8 @@ export type FormatoViral = {
 export const PANDA_PLAYER = "https://player-vz-30e1d25c-f58.tv.pandavideo.com.br/embed/?v=";
 export function embedPanda(link: string | null): string | null {
   if (!link) return null;
-  const l = link.trim();
+  // Aceita também o código inteiro do <iframe> que o Panda dá
+  const l = (link.match(/src=["']([^"']+)["']/i)?.[1] ?? link).trim();
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(l)) return PANDA_PLAYER + l;
   if (/pandavideo\.com/i.test(l)) return l;
   return null;
