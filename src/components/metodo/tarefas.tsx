@@ -15,6 +15,8 @@ import { statusEtapa } from "@/lib/plano";
 import { cn } from "@/lib/utils";
 
 const DICA_AUTO = "Essa tarefa se completa sozinha quando você usa a ferramenta.";
+// Ferramentas que saíram do app (analisador de site e IA do Método): as tarefas delas viram de marcar na mão
+const FERRAMENTA_REMOVIDA = /analis|site|^ia[_-]?|ia_metodo/i;
 
 function Bolinha({
   feita,
@@ -86,7 +88,7 @@ export function ListaTarefas({
         {tarefas.map((t) => {
           const feita = dados.feitas.has(t.id);
           const ehForm = t.tipo === "formulario";
-          const auto = t.tipo === "auto" || ehForm;
+          const auto = (t.tipo === "auto" && !FERRAMENTA_REMOVIDA.test(t.chave_auto ?? "")) || ehForm;
           const data = dados.datas.get(t.id);
           const alternar = () => {
             const nova = !feita;
