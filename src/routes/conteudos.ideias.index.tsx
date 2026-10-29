@@ -1,17 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  CalendarPlus,
-  ExternalLink,
-  Heart,
-  Images,
-  Instagram,
-  Link2,
-  Music2,
-  Search,
-  Video,
-} from "lucide-react";
+import { ArrowLeft, CalendarPlus, ExternalLink, Heart, Images, Instagram, Link2, Lock, Music2, Search, Video } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,6 +29,7 @@ import {
 } from "@/lib/acervo";
 import type { CamposConteudo } from "@/lib/dados-loja";
 import { hojeSaoPaulo } from "@/lib/formato";
+import { textoLiberacao, useLiberacaoIdeias } from "@/lib/liberacao";
 import { cn } from "@/lib/utils";
 
 type Busca = {
@@ -86,6 +76,7 @@ function Ideias() {
   const busca = Route.useSearch();
   const navigate = Route.useNavigate();
   const atual = busca.aba ?? "banco";
+  const liberacao = useLiberacaoIdeias();
   return (
     <AppLayout titulo="Ideias de conteúdo">
       <Link
@@ -121,7 +112,27 @@ function Ideias() {
           ))}
         </div>
       </div>
-      {atual === "banco" ? <BancoIdeias /> : <Formatos />}
+      {!liberacao.liberado && !liberacao.carregando ? (
+        <div className="card-metodo mx-auto max-w-xl px-6 py-14 text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-accent-soft text-primary">
+            <Lock className="size-6" />
+          </span>
+          <p className="mt-4 text-lg font-semibold">O banco de ideias libera na sua segunda semana de Método</p>
+          <p className="mx-auto mt-2 max-w-[44ch] text-sm text-muted-foreground">
+            Antes de pegar ideia pronta, quero que você monte a base da sua loja. Foca nas tarefas do plano prático que daqui a pouco as ideias e os formatos virais estão aqui te esperando.
+          </p>
+          <p className="mt-4 inline-block rounded-full bg-muted px-4 py-1.5 text-sm font-medium">{textoLiberacao(liberacao.liberaEm, liberacao.faltam)}</p>
+          <div className="mt-6">
+            <Link to="/plano-pratico" className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary-hover">
+              Ir pro plano prático
+            </Link>
+          </div>
+        </div>
+      ) : atual === "banco" ? (
+        <BancoIdeias />
+      ) : (
+        <Formatos />
+      )}
     </AppLayout>
   );
 }

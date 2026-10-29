@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Lightbulb, Plus } from "lucide-react";
+import { Lightbulb, Lock, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Calendario } from "@/components/conteudos/calendario";
@@ -13,6 +13,7 @@ import { TIPOS_ACERVO } from "@/lib/acervo";
 import { STATUS } from "@/lib/calendario";
 import { type CamposConteudo, type Post, resultadoPendente, usePosts } from "@/lib/dados-loja";
 import { cn } from "@/lib/utils";
+import { textoLiberacao, useLiberacaoIdeias } from "@/lib/liberacao";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 type Busca = { aba?: string; tipo?: string; status?: string };
@@ -59,20 +60,37 @@ function Conteudos() {
     [lista, tipo, status],
   );
 
+  const liberacao = useLiberacaoIdeias();
+
   return (
     <AppLayout>
       <CardConteudo aberto={card !== null} conteudo={conteudoAberto} inicial={card?.inicial} onFechar={() => setCard(null)} />
       <CardResultados post={resultado} onFechar={() => setResultado(null)} proximo={resultado ? pendentes.find((p) => p.id !== resultado.id) : undefined} onProximo={setResultado} />
       <PaginaTopo titulo="Meus conteúdos" subtitulo="Do roteiro à publicação, tudo num calendário só." />
 
-      <Link to="/conteudos/ideias" className="mb-6 flex flex-col gap-4 rounded-2xl bg-accent-soft p-6 transition-colors hover:bg-[#fbe0ec] sm:flex-row sm:items-center">
-        <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-primary"><Lightbulb className="size-6" /></span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[22px] font-semibold text-foreground">Sem ideias de conteúdo?</span>
-          <span className="mt-1 block text-sm text-muted-foreground">Ideias por nicho e os formatos que estão viralizando, com referência.</span>
-        </span>
-        <span className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">Ver ideias</span>
-      </Link>
+      {liberacao.liberado || liberacao.carregando ? (
+        <Link to="/conteudos/ideias" className="mb-6 flex flex-col gap-4 rounded-2xl bg-accent-soft p-6 transition-colors hover:bg-[#fbe0ec] sm:flex-row sm:items-center">
+          <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-surface text-primary"><Lightbulb className="size-6" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[22px] font-semibold text-foreground">Sem ideias de conteúdo?</span>
+            <span className="mt-1 block text-sm text-muted-foreground">Ideias por nicho e os formatos que estão viralizando, com referência.</span>
+          </span>
+          <span className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground">Ver ideias</span>
+        </Link>
+      ) : (
+        <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 sm:flex-row sm:items-center">
+          <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground"><Lock className="size-6" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[22px] font-semibold text-foreground">Banco de ideias de conteúdo</span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              As ideias e os formatos virais liberam na sua segunda semana de Método. Até lá, foca nas tarefas do plano prático.
+            </span>
+          </span>
+          <span className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-muted px-5 text-sm font-semibold text-muted-foreground">
+            {textoLiberacao(liberacao.liberaEm, liberacao.faltam)}
+          </span>
+        </div>
+      )}
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-xl border border-border bg-surface p-1" role="tablist">

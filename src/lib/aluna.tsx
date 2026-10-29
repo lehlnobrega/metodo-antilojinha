@@ -10,6 +10,7 @@ export type Aluna = {
   email: string;
   nome: string | null;
   acesso_ate: string | null;
+  data_compra: string | null;
   status: string | null;
   pesquisa_concluida: boolean | null;
   is_admin: boolean | null;
@@ -48,7 +49,7 @@ export function AlunaProvider({ children }: { children: ReactNode }) {
     const [{ data }, { data: ativo }] = await Promise.all([
       supabase
         .from("alunas")
-        .select("id, email, nome, acesso_ate, status, pesquisa_concluida, is_admin")
+        .select("id, email, nome, acesso_ate, data_compra, status, pesquisa_concluida, is_admin")
         .eq("id", s.user.id)
         .maybeSingle(),
       supabase.rpc("acesso_ativo"),
