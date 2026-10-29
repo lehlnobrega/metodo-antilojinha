@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/metodo/client";
+import { useAluna } from "@/lib/aluna";
 
 export type Nicho = { id: number; nome: string; ordem: number; emoji: string | null };
 export type ConteudoAcervo = {
@@ -116,10 +117,13 @@ export function useFormatosVirais(apenasPublicados = true) {
 }
 
 export function useDecisoesFormatos() {
+  const { sessao } = useAluna();
   return useQuery({
     queryKey: ["acervo", "decisoes"],
+    enabled: Boolean(sessao),
     queryFn: async () => {
-      const { data, error } = await supabase.from("decisoes_formatos").select("formato_id, decisao");
+      // Só as da pessoa logada (a admin enxerga as de todas pelo RLS)
+      const { data, error } = await supabase.from("decisoes_formatos").select("formato_id, decisao").eq("aluna_id", sessao!.user.id);
       if (error) falha(error);
       return new Map(((data ?? []) as { formato_id: number; decisao: Decisao }[]).map((d) => [d.formato_id, d.decisao]));
     },
@@ -140,10 +144,13 @@ export async function salvarDecisao(alunaId: string, formatoId: number, decisao:
 
 // ===== Ideias salvas (coraçãozinho) =====
 export function useIdeiasSalvas() {
+  const { sessao } = useAluna();
   return useQuery({
     queryKey: ["acervo", "salvas"],
+    enabled: Boolean(sessao),
     queryFn: async () => {
-      const { data, error } = await supabase.from("ideias_salvas").select("conteudo_id");
+      // Só as da pessoa logada (a admin enxerga as de todas pelo RLS)
+      const { data, error } = await supabase.from("ideias_salvas").select("conteudo_id").eq("aluna_id", sessao!.user.id);
       if (error) falha(error);
       return new Set(((data ?? []) as { conteudo_id: number }[]).map((r) => r.conteudo_id));
     },

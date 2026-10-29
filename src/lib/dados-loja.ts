@@ -85,6 +85,7 @@ export function usePosts() {
       const { data, error } = await supabase
         .from("posts")
         .select(CAMPOS_POST)
+        .eq("aluna_id", sessao!.user.id)
         .order("data_post", { ascending: false })
         .limit(1000);
       if (error) erro(error);
@@ -138,6 +139,7 @@ export function useMetricas() {
       const { data, error } = await supabase
         .from("metricas_loja")
         .select("id, mes, faturamento, pedidos, sessoes, seguidores_instagram, seguidores_tiktok")
+        .eq("aluna_id", sessao!.user.id)
         .order("mes", { ascending: false });
       if (error) erro(error);
       return (data ?? []) as Metrica[];
@@ -303,6 +305,7 @@ export function useMetricasSemana() {
       const { data, error } = await supabase
         .from("metricas_semana")
         .select("id, semana, faturamento, pedidos, sessoes, seguidores_instagram, seguidores_tiktok, ticket_medio, taxa_conversao")
+        .eq("aluna_id", sessao!.user.id)
         .order("semana", { ascending: false })
         .limit(156);
       if (error) erro(error);

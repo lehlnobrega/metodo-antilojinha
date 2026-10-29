@@ -71,7 +71,7 @@ export function useTarefas() {
     queryFn: async () => {
       const [t, c] = await Promise.all([
         supabase.from("tarefas").select("id, modulo_id, ordem, titulo, descricao, tipo, chave_auto").order("ordem"),
-        supabase.from("tarefas_concluidas").select("tarefa_id, concluida_em"),
+        supabase.from("tarefas_concluidas").select("tarefa_id, concluida_em").eq("aluna_id", sessao!.user.id),
       ]);
       if (t.error) falhou(t.error);
       if (c.error) falhou(c.error);
@@ -177,6 +177,7 @@ export function useUltimaMetrica() {
       const { data, error } = await supabase
         .from("metricas_loja")
         .select("mes, faturamento, pedidos")
+        .eq("aluna_id", sessao!.user.id)
         .order("mes", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -214,6 +215,7 @@ export function usePostsDatas() {
       const { data, error } = await supabase
         .from("posts")
         .select("data_post")
+        .eq("aluna_id", sessao!.user.id)
         .eq("status", "publicado")
         .order("data_post", { ascending: false })
         .limit(800);
